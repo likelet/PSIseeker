@@ -47,6 +47,10 @@ public class PISseeker {
         
         while (iter1.hasNext()) {
             SAMRecord sitem = (SAMRecord) iter1.next();
+            if(sitem.getReadUnmappedFlag()) continue;
+            if(sitem.getDuplicateReadFlag()) continue;
+            if(sitem.getNotPrimaryAlignmentFlag()) continue;
+            if(sitem.getReadFailsVendorQualityCheckFlag()) continue;
             String chrom = sitem.getReferenceName();
             int start = sitem.getAlignmentStart();
             int end = sitem.getAlignmentEnd();
