@@ -39,5 +39,7 @@ public class Console {
         }else if (args[0].endsWith("-run")) {
             new PISseeker(args[1],args[2],args[3]);
         }
+          long end = System.nanoTime();
+        System.out.println("Total running time is " + (end - start) * 10e-10 + "s");
     }
 }

@@ -38,13 +38,15 @@ public class PSIout {
     }
     public void fishertest() {
         FisherExactTest test = new FisherExactTest();
+        int a=supporCountControl;
+        int b=totalCountControl;
         if (supporCountControl == 0) {
-            supporCountControl = 1;
+            a = 1;
         }
         if (totalCountControl == 0) {
-            totalCountControl = 0;
+            b = 1;
         }
-        this.Pvalue = test.getTwoTailP(supporCountInTreat, totalCountInTreat - supporCountInTreat, supporCountControl, totalCountControl - supporCountControl);
+        this.Pvalue = test.getTwoTailP(supporCountInTreat, totalCountInTreat - supporCountInTreat, a, b - a);
     }
 
 
