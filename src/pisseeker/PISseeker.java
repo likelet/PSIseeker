@@ -23,7 +23,7 @@ public class PISseeker {
 //    private String gaifile="";
     private  SAMFileReader srt;
     private  SAMFileReader src;
-    private HashMap<String,ArrayList<PSIout>> pomap=new HashMap();
+    private HashMap<String,PSIout> pomap=new HashMap();
     /**
      * @param args the command line arguments
      */
@@ -55,18 +55,13 @@ public class PISseeker {
             int start = sitem.getAlignmentStart();
             int end = sitem.getAlignmentEnd();
             if (hashposition.add(chrom + end)) {
-                PSIout po = new PSIout(chrom, end, "");
-                if (chrsome.add(chrom)) {
-                    ArrayList<PSIout> psilist = new ArrayList<PSIout>();
-                    psilist.add(po);
-                    pomap.put(chrom, psilist);
-                } else {
-                    pomap.get(chrom).add(po);
-                }
-            }else{
-                int index=pomap.get(chrom).size()-1;//array last one
-                pomap.get(chrom).get(index).add1supporCountInTreat();
-            }       
+                PSIout po = new PSIout(chrom, end);
+                pomap.put(chrom + "_" + end, po);
+            } else {
+                pomap.get(chrom + "_" + end);
+                pomap.get(chrom + "_" + end).add1supporCountInTreat();
+                pomap.get(chrom + "_" + end).setBase(sitem.getReadString().charAt(sitem.getReadString().length()));
+            }
         }
     }
 }

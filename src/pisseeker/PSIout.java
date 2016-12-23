@@ -5,6 +5,8 @@
 
 package pisseeker;
 
+import pisseeker.pub.FisherExactTest;
+
 /**
  *
  * @author zhaoqi
@@ -15,7 +17,7 @@ public class PSIout {
     
     private int position; // 1 based  position
     
-    private String base; // nuclic acid at candited position
+    private char base= ' '; // nuclic acid at candited position
     
     private int supporCountInTreat=0;
     
@@ -29,15 +31,23 @@ public class PSIout {
     
     private double adjustP = 1;//ajust Pvalue
 
-    public PSIout(String chr, int position, String base) {
+    public PSIout(String chr, int position) {
         this.chr = chr;
         this.position = position;
-        this.base = base;
+        
+    }
+    public void fishertest() {
+        FisherExactTest test = new FisherExactTest();
+        if (supporCountControl == 0) {
+            supporCountControl = 1;
+        }
+        if (totalCountControl == 0) {
+            totalCountControl = 0;
+        }
+        this.Pvalue = test.getTwoTailP(supporCountInTreat, totalCountInTreat - supporCountInTreat, supporCountControl, totalCountControl - supporCountControl);
     }
 
-    
-    
-    
+
     
     /**
      * Get the value of adjustP
@@ -159,7 +169,7 @@ public class PSIout {
      *
      * @return the value of base
      */
-    public String getBase() {
+    public char getBase() {
         return base;
     }
 
@@ -168,7 +178,7 @@ public class PSIout {
      *
      * @param base new value of base
      */
-    public void setBase(String base) {
+    public void setBase(char base) {
         this.base = base;
     }
 
