@@ -25,13 +25,19 @@ public class Console {
         if (args.length == 0) {
 
             System.out.println(ToolsforCMD.print_ansi_PURPLE(ToolsforCMD.getDAtoolstr()));
-            System.out.println(ToolsforCMD.print_ansi_PURPLE("Java-based Data Analysis tool for biological data process, version " + version) + "\r\n");
+            System.out.println(ToolsforCMD.print_ansi_PURPLE("A java-based software for identifying pseudouridylic acid site in RNA from NGS data, version " + version) + "\r\n");
 
             System.out.println("Please input args\n Type "
                     + ToolsforCMD.print_ansi_GREEN("java -jar PSIseeker.jar ")
                     + ToolsforCMD.print_ansi_CYAN("-h")
                     + " for help\r\n");
         } else if (args[0].endsWith("-h")) {
+            
+            System.out.println(ToolsforCMD.print_ansi_YELLOW("Calling sites with input library :   \r\n\t\t")
+                    + ToolsforCMD.print_ansi_GREEN("java -jar DAtools.jar -run")
+                    + ToolsforCMD.print_ansi_CYAN(" <TreatBam(sorted)> <ControlBan(sorted)> <outputfile> "));
+        }else if (args[0].endsWith("-run")) {
+            new PISseeker(args[1],args[2],args[3]);
         }
     }
 }
