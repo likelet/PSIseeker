@@ -17,6 +17,7 @@ public class PSIout {
     
     private int position; // 1 based  position
     private String strand;// strand information
+    private boolean strandB;//boolean format for strand
     private char base= ' '; // nuclic acid at candited position
     
     private int supporCountInTreat=0;
@@ -45,6 +46,7 @@ public class PSIout {
         }else{
             this.strand = "+";
         }
+        this.strandB=strand;
         
     }
     
@@ -60,6 +62,14 @@ public class PSIout {
             b = 1;
         }
         this.Pvalue = test.getTwoTailP(supporCountInTreat, totalCountInTreat - supporCountInTreat, a, b - a);
+    }
+
+    public boolean isStrandB() {
+        return strandB;
+    }
+
+    public void setStrandB(boolean strandB) {
+        this.strandB = strandB;
     }
 
 
@@ -256,6 +266,38 @@ public class PSIout {
         this.strand = strand;
     }
     
+    
+    @Override
+
+    public int hashCode() {
+
+//        System.out.println("------hashCode----");
+
+        return 1;
+
+    }
+
+    @Override
+
+    public boolean equals(Object obj) {
+
+//        System.out.println("------equals----");
+
+        if (obj instanceof PSIout) {
+
+            PSIout po = (PSIout) obj;
+
+            if (this.position==(po.getPosition())) {
+
+                return true;
+
+            }
+
+        }
+
+        return false;
+
+    }
     
     
     @Override
