@@ -7,16 +7,16 @@
 package pisseeker;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.SortedMap;
 import net.sf.samtools.SAMFileReader;
 import net.sf.samtools.SAMRecord;
-import pisseeker.MultipleCorrection.FDR;
 
 /**
  *
@@ -26,8 +26,13 @@ public class PISseeker {
 //    private String gaifile="";
     private  SAMFileReader srt;
     private  SAMFileReader src;
-    private HashMap<Integer,PSIout> pomap=new HashMap();
+    
+    //storage chrome and position information
+    private HashMap<String,LinkedHashMap <Integer,PSIout>> PositiveResultMap=new HashMap<String,LinkedHashMap <Integer,PSIout>>();// result in positve strand 
+    private HashMap<String,LinkedHashMap <Integer,PSIout>> negativeResultMap=new HashMap<String,LinkedHashMap <Integer,PSIout>>();// result in negative strand;
+//    private HashMap<Integer,PSIout> pomap=new HashMap();
     public int filternumber=2;//at least 2 read support
+    public HashSet<String> chrlist=new HashSet<String>();
     /**
      * @param args the command line arguments
      */
@@ -45,18 +50,18 @@ public class PISseeker {
    
     public void process(){
         
-//        HashMap<Integer,ArrayList<SAMRecord>> posSRHash=new  HashMap<Integer,ArrayList<SAMRecord>>();
+//    
       
-        ArrayList<Integer> searchlist=new ArrayList<Integer>();// store search position
-        // in one specific chrome
+      // in one specific chrome
         ArrayList<SAMRecord> samlistTreat=new ArrayList<SAMRecord> ();
-        String chrome="chr2L";
-        Iterator iter = srt.query(chrome,0,0,true);
-        System.out.println("Get record from record "+chrome );
-        
+//        String chrome="chr2L";
+//        Iterator iter = srt.query(chrome,0,0,true);
+//        System.out.println("Get record from record "+chrome );
+//        
         HashSet<Integer> hashposition = new HashSet<Integer>();
         
-        //first cycle
+        //first cycle initialized chromesome and positions
+        Iterator iter = srt.iterator();
         System.out.println("Start first reading cycle for position infomation");
         ArrayList<Integer> positionlist=new ArrayList<Integer>();
         while (iter.hasNext()) {
@@ -66,11 +71,26 @@ public class PISseeker {
             if(sitem.getNotPrimaryAlignmentFlag()) continue;
             if(sitem.getReadFailsVendorQualityCheckFlag()) continue;
             int end = sitem.getAlignmentEnd();
-            if(hashposition.add(end)){
-                positionlist.add(end);
-                PSIout po = new PSIout(chrome,end);
-                //po.setBase(sitem.getReadBases());
-                pomap.put(end, po);
+            int start= sitem.getAlignmentStart();
+            boolean strand=sitem.getReadNegativeStrandFlag();//strand of the query (false for forward; true for reverse strand).
+           
+            String  chrome=sitem.getReferenceName();
+            if(chrlist.add(chrome)){
+                LinkedHashMap <Integer,PSIout> pomap =new LinkedHashMap <Integer,PSIout>() ;
+                if(strand){
+                    PSIout po = new PSIout(chrome,end,strand);
+                    pomap.put(end, po);
+                    negativeResultMap.put(chrome, pomap);
+                }else{
+                    PSIout po = new PSIout(chrome,start,strand);
+                    pomap.put(start, po);
+                    negativeResultMap.put(chrome, pomap);
+                }
+                
+            }else{
+                if(resultMap.get(chrome).keySet().contains(key)) continue;
+                PSIout po = new PSIout(chrome,end,strand);
+                resultMap.get(chrome).put(key, po);
             }
             samlistTreat.add(sitem);
         }

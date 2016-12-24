@@ -16,7 +16,7 @@ public class PSIout {
     private String chr;
     
     private int position; // 1 based  position
-    
+    private String strand;// strand information
     private char base= ' '; // nuclic acid at candited position
     
     private int supporCountInTreat=0;
@@ -36,6 +36,19 @@ public class PSIout {
         this.position = position;
         
     }
+
+    public PSIout(String chr, int position, boolean strand) {
+        this.chr = chr;
+        this.position = position;
+        if(strand){
+            this.strand = "-";
+        }else{
+            this.strand = "+";
+        }
+        
+    }
+    
+    
     public void fishertest() {
         FisherExactTest test = new FisherExactTest();
         int a=supporCountControl;
@@ -234,11 +247,20 @@ public class PSIout {
     public void add1totalCountControl(){
         this.totalCountControl++;
     }
+
+    public String getStrand() {
+        return strand;
+    }
+
+    public void setStrand(String strand) {
+        this.strand = strand;
+    }
+    
     
     
     @Override
     public String toString() {
-        return chr + "\t" + position + "\t" + base + "\t" + supporCountInTreat + "\t" + totalCountInTreat +"\t" + supporCountControl +"\t" + totalCountControl + "\t" + Pvalue + "\t" + adjustP ;
+        return chr + "\t" + position + "\t" + base + "\t"+strand+"\t" + supporCountInTreat + "\t" + totalCountInTreat +"\t" + supporCountControl +"\t" + totalCountControl + "\t" + Pvalue + "\t" + adjustP ;
     }
 
     
