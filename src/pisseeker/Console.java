@@ -45,7 +45,7 @@ public class Console {
 
             System.out.println(ToolsforCMD.print_ansi_WHITE("Extra paramters for options"));
             System.out.println(ToolsforCMD.print_ansi_RED("\r\n\t\t-covT\t ")
-                    + ToolsforCMD.print_ansi_YELLOW("User defined minimum reads for supporting truncated site in treatment,DEFAULT 2\r\n"));
+                    + ToolsforCMD.print_ansi_YELLOW("User defined minimum reads threshold for supporting truncated site in treatment and qualified reads in control,DEFAULT 2\r\n"));
 
         } else if (args[0].endsWith("-run")) {
             PSIseeker psiseeker = new PSIseeker(args[1], args[2]);

@@ -183,7 +183,19 @@ public class PSIseeker {
 
     public void CountReadsTreat(PSIout po, SAMRecordIterator readsIt) {
         for (Iterator<SAMRecord> iterator = readsIt; iterator.hasNext();) {
-            SAMRecord sr = iterator.next();
+             SAMRecord sr = iterator.next();
+            if (sr.getReadUnmappedFlag()) {
+                continue;
+            }
+            if (sr.getDuplicateReadFlag()) {
+                continue;
+            }
+            if (sr.getNotPrimaryAlignmentFlag()) {
+                continue;
+            }
+            if (sr.getReadFailsVendorQualityCheckFlag()) {
+                continue;
+            }
             boolean strand = sr.getReadNegativeStrandFlag();
             if (strand == po.isStrandB()) {
                 if (strand) {
@@ -209,6 +221,19 @@ public class PSIseeker {
     public void CountReadsControl(PSIout po, SAMRecordIterator readsIt) {
         for (Iterator<SAMRecord> iterator = readsIt; iterator.hasNext();) {
             SAMRecord sr = iterator.next();
+            if (sr.getReadUnmappedFlag()) {
+                continue;
+            }
+            if (sr.getDuplicateReadFlag()) {
+                continue;
+            }
+            if (sr.getNotPrimaryAlignmentFlag()) {
+                continue;
+            }
+            if (sr.getReadFailsVendorQualityCheckFlag()) {
+                continue;
+            }
+            
             boolean strand = sr.getReadNegativeStrandFlag();
             if (strand == po.isStrandB()) {
                 if (strand) {
