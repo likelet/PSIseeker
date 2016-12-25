@@ -18,7 +18,7 @@ import pisseeker.pub.ToolsforCMD;
 public class Console {
 
     public static void main(String[] args) throws IOException, FileNotFoundException, ParserConfigurationException {
-        long start = System.nanoTime();
+        long start = System.currentTimeMillis();
         String version = "0.0.1";
 //        System.out.println();
 
@@ -34,12 +34,17 @@ public class Console {
         } else if (args[0].endsWith("-h")) {
             
             System.out.println(ToolsforCMD.print_ansi_YELLOW("Calling sites with input library :   \r\n\t\t")
-                    + ToolsforCMD.print_ansi_GREEN("java -jar DAtools.jar -run")
+                    + ToolsforCMD.print_ansi_GREEN("java -jar PSIseeker.jar -run")
                     + ToolsforCMD.print_ansi_CYAN(" <TreatBam(sorted)> <ControlBan(sorted)> <outputfile> "));
+            System.out.println(ToolsforCMD.print_ansi_YELLOW("Calling sites with input library(Parallel Mode) :   \r\n\t\t")
+                    + ToolsforCMD.print_ansi_GREEN("java -jar PSIseeker.jar -runMthread")
+                    + ToolsforCMD.print_ansi_CYAN(" <TreatBam(sorted)> <ControlBan(sorted)> <outputfile> <threadnum> "));
         }else if (args[0].endsWith("-run")) {
-            new PISseeker(args[1],args[2],args[3]);
+            new PSIseeker(args[1],args[2],args[3]);
+        }else if (args[0].endsWith("-runMthread")) {
+            new PSIseekerParallel(args[1],args[2],args[3]);
         }
-          long end = System.nanoTime();
-        System.out.println("Total running time is " + (end - start) * 10e-10 + "s");
+          long end = System.currentTimeMillis();
+        System.out.println("Total running time is " + ToolsforCMD.print_ansi_YELLOW((end - start)  + "s"));
     }
 }

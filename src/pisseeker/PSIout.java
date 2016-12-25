@@ -7,6 +7,8 @@ package pisseeker;
 
 import pisseeker.pub.FisherExactTest;
 
+
+
 /**
  *
  * @author zhaoqi
@@ -19,7 +21,7 @@ public class PSIout {
     private String strand;// strand information
     private boolean strandB;//boolean format for strand
     private char base= ' '; // nuclic acid at candited position
-    
+    private String readsString ="";
     private int supporCountInTreat=0;
     
     private int totalCountInTreat=0;
@@ -207,6 +209,14 @@ public class PSIout {
         this.base = base;
     }
 
+    public String getReadsString() {
+        return readsString;
+    }
+
+    public void setReadsString(String readsString) {
+        this.readsString = readsString;
+    }
+
 
     /**
      * Get the value of position
@@ -302,7 +312,7 @@ public class PSIout {
     
     @Override
     public String toString() {
-        return chr + "\t" + position + "\t" + base + "\t"+strand+"\t" + supporCountInTreat + "\t" + totalCountInTreat +"\t" + supporCountControl +"\t" + totalCountControl + "\t" + Pvalue + "\t" + adjustP ;
+        return chr + "\t" + position + "\t" + base + "\t"+readsString+"\t"+strand+"\t" + supporCountInTreat + "\t" + totalCountInTreat +"\t" + supporCountControl +"\t" + totalCountControl + "\t" + Pvalue + "\t" + adjustP ;
     }
 
     

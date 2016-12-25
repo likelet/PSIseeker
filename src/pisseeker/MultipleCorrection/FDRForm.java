@@ -5,11 +5,8 @@
  */
 package pisseeker.MultipleCorrection;
 
+
 import pisseeker.pub.OrderBaseRecord;
-
-
-
-;
 
 
 /**
