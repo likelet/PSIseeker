@@ -1,4 +1,4 @@
-package qizhao.pisseeker.pub.threadpool;
+package pisseeker.pub.threadpool;
 
 /**
  * �����Ƿ�ֹͬһ�̶߳�������в��������ͻ

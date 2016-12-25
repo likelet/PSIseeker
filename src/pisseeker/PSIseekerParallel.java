@@ -54,6 +54,21 @@ public class PSIseekerParallel {
      * @param args the command line arguments
      */
     //tbam and cbam are both sorted bamfile 
+    
+    
+    public PSIseekerParallel(String tbam, String cbam) throws IOException {
+        this.cbam=cbam;
+        this.tbam=tbam;
+        File bamfile1 = new File(tbam);
+        File bamfile2 = new File(cbam);
+        srt = SamReaderFactory.makeDefault().open(
+                SamInputResource.of(bamfile1).
+                index(new File(bamfile1.getAbsolutePath() + ".bai"))
+        );
+        this.initialize();
+        
+        
+    }
     public PSIseekerParallel(String tbam, String cbam, String out) throws IOException {
         this.cbam=cbam;
         this.tbam=tbam;
@@ -158,7 +173,7 @@ public class PSIseekerParallel {
         try {
             // run paralla
             ExecutorService pool = Executors.newFixedThreadPool(this.Thread);//creat a new thread pool
-            int size = chrlist.size() / Thread + 1;
+            
             runPSIseekerThread runPSIseekerthread = null;
             for (Iterator<String> iterator = chrlist.iterator(); iterator.hasNext();) {
                 String chr = iterator.next();
@@ -343,6 +358,17 @@ public class PSIseekerParallel {
         fw.close();
     }
 
+    public int getFilternumber() {
+        return filternumber;
+    }
+
+    public void setFilternumber(int filternumber) {
+        this.filternumber = filternumber;
+    }
+
+    
+    
+    
     public static void main(String[] args) throws IOException {
         new PSIseekerParallel("test/SMULTQ02-1.clean.fq.gz.Aligned.sortedByCoord.out.bam", "test/SMULTQ02-2.clean.fq.gz.Aligned.sortedByCoord.out.bam", "test/result.txt","2");
 

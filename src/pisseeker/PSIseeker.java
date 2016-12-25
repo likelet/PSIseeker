@@ -35,7 +35,6 @@ public class PSIseeker {
 
     private final SamReader srt;
     private final SamReader src;
-    private int readsRegion = 500;
 
     //storage chrome and position information
     private HashMap<String, HashSet<PSIout>> positiveResultMap = new HashMap<String, HashSet<PSIout>>();// result in positve strand 
@@ -47,6 +46,22 @@ public class PSIseeker {
     /**
      * @param args the command line arguments
      */
+    
+    public PSIseeker(String tbam, String cbam) throws IOException {
+
+        File bamfile1 = new File(tbam);
+        File bamfile2 = new File(cbam);
+        srt = SamReaderFactory.makeDefault().open(
+                SamInputResource.of(bamfile1).
+                index(new File(bamfile1.getAbsolutePath() + ".bai"))
+        );
+        src = SamReaderFactory.makeDefault().open(
+                SamInputResource.of(bamfile2).
+                index(new File(bamfile2.getAbsolutePath() + ".bai"))
+        );
+
+    }
+    
     //tbam and cbam are both sorted bamfile 
     public PSIseeker(String tbam, String cbam, String out) throws IOException {
 
@@ -294,6 +309,17 @@ public class PSIseeker {
         }
     }
 
+    public int getFilternumber() {
+        return filternumber;
+    }
+
+    public void setFilternumber(int filternumber) {
+        this.filternumber = filternumber;
+    }
+
+    
+    
+    
     public static void main(String[] args) throws IOException {
         new PSIseeker("test/SMULTQ02-1.clean.fq.gz.Aligned.sortedByCoord.out.bam", "test/SMULTQ02-2.clean.fq.gz.Aligned.sortedByCoord.out.bam", "test/result.txt");
 
@@ -312,5 +338,7 @@ public class PSIseeker {
 ////
 //        }
     }
+    
+    
 
 }
