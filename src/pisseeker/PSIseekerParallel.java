@@ -13,6 +13,9 @@ import htsjdk.samtools.SAMSequenceRecord;
 import htsjdk.samtools.SamInputResource;
 import htsjdk.samtools.SamReader;
 import htsjdk.samtools.SamReaderFactory;
+import htsjdk.samtools.reference.FastaSequenceFile;
+import htsjdk.samtools.reference.IndexedFastaSequenceFile;
+import htsjdk.samtools.reference.ReferenceSequenceFile;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -39,10 +42,9 @@ public class PSIseekerParallel {
 
     private final SamReader srt;
     public  int Thread=4;
-    
     public String tbam;
     public String cbam;
-
+    public String genomefile;
     //storage chrome and position information
     private HashMap<String, HashSet<PSIout>> positiveResultMap = new HashMap<String, HashSet<PSIout>>();// result in positve strand 
     private HashMap<String, HashSet<PSIout>> negativeResultMap = new HashMap<String, HashSet<PSIout>>();// result in negative strand;
@@ -56,48 +58,34 @@ public class PSIseekerParallel {
     //tbam and cbam are both sorted bamfile 
     
     
-    public PSIseekerParallel(String tbam, String cbam) throws IOException {
+    public PSIseekerParallel(String tbam, String cbam,String genomefile) throws IOException {
         this.cbam=cbam;
         this.tbam=tbam;
         File bamfile1 = new File(tbam);
         File bamfile2 = new File(cbam);
-        srt = SamReaderFactory.makeDefault().open(
+        this.genomefile=genomefile;
+        srt = SamReaderFactory.makeDefault().referenceSequence(new File(genomefile)).open(
                 SamInputResource.of(bamfile1).
                 index(new File(bamfile1.getAbsolutePath() + ".bai"))
         );
+       
         this.initialize();
+        
         
         
     }
-    public PSIseekerParallel(String tbam, String cbam, String out) throws IOException {
+    public PSIseekerParallel(String tbam, String cbam,String genomefile, String out) throws IOException {
         this.cbam=cbam;
         this.tbam=tbam;
         File bamfile1 = new File(tbam);
         File bamfile2 = new File(cbam);
-        srt = SamReaderFactory.makeDefault().open(
+        this.genomefile=genomefile;
+        srt = SamReaderFactory.makeDefault().referenceSequence(new File(genomefile)).open(
                 SamInputResource.of(bamfile1).
                 index(new File(bamfile1.getAbsolutePath() + ".bai"))
         );
+      
         this.initialize();
-        this.process();
-        this.print(out);
-        
-    }
-    
-    public PSIseekerParallel(String tbam, String cbam, String out,String thread) throws IOException {
-        this.cbam=cbam;
-        this.tbam=tbam;
-        File bamfile1 = new File(tbam);
-        File bamfile2 = new File(cbam);
-        srt = SamReaderFactory.makeDefault().open(
-                SamInputResource.of(bamfile1).
-                index(new File(bamfile1.getAbsolutePath() + ".bai"))
-        );
-        this.Thread=Integer.parseInt(thread);
-        this.initialize();
-        this.process();
-        this.print(out);
-        
     }
     
 
@@ -137,9 +125,9 @@ public class PSIseekerParallel {
             if (strand) {
                 if (!negativeResultMap.containsKey(chrome)) {
                     HashSet<PSIout> pomap = new HashSet<PSIout>();
-
                     PSIout po = new PSIout(chrome, end, strand);
                     po.setBase(new DNAsequenceProcess().getReverseComplimentary(sitem.getReadString()).charAt(0));
+//                    po.setExbase(sitem.);
                     po.setReadsString(sitem.getReadString());
                     pomap.add(po);
                     negativeResultMap.put(chrome, pomap);
@@ -231,6 +219,13 @@ public class PSIseekerParallel {
                 CountReadsTreat(pso, tempit1);
                 CountReadsControl(pso, tempit2);
             }
+            try {
+                subsrt.close();
+                subsrc.close();
+            } catch (IOException ex) {
+                Logger.getLogger(PSIseekerParallel.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            
         }
 
         public void CountReadsTreat(PSIout po, SAMRecordIterator readsIt) {
@@ -374,20 +369,24 @@ public class PSIseekerParallel {
     
     
     public static void main(String[] args) throws IOException {
-        new PSIseekerParallel("test/SMULTQ02-1.clean.fq.gz.Aligned.sortedByCoord.out.bam", "test/SMULTQ02-2.clean.fq.gz.Aligned.sortedByCoord.out.bam", "test/result.txt","2");
+//        new PSIseekerParallel("test/SMULTQ02-1.clean.fq.gz.Aligned.sortedByCoord.out.bam", "test/SMULTQ02-2.clean.fq.gz.Aligned.sortedByCoord.out.bam", "test/result.txt","2");
 
-//        File bamfile1 = new File("test/SMULTQ02-1.clean.fq.gz.Aligned.sortedByCoord.out.bam");
+        File bamfile1 = new File("E:\\迅雷下载\\SMULTQ02-4.clean.fq.gz.Aligned.sortedByCoord.out.bam");
+        String genomefile="E:\\迅雷下载\\dm6.fa";
+          SamReader srt = SamReaderFactory.makeDefault().referenceSequence(new File(genomefile)).open(
+                SamInputResource.of(bamfile1).
+                index(new File(bamfile1.getAbsolutePath() + ".bai"))
+        );
 //
-//        SamReader srt = SamReaderFactory.makeDefault().open(
-//                SamInputResource.of(bamfile1).
-//                index(new File(bamfile1.getAbsolutePath() + ".bai"))
-//        );
-////
-//        SAMRecordIterator tempit1 = srt.queryContained("chr2L", 10000, 20000);
+  
+    IndexedFastaSequenceFile  genomeFile=new IndexedFastaSequenceFile (new File(genomefile));
+        System.out.println(genomeFile.getSequence("chr2L"));
+//        System.out.println(genomeFile.getSequenceDictionary().getSequence("chr2L"));
+//SAMRecordIterator tempit1=srt.iterator();
 //        
 //        for (Iterator iterator = tempit1; iterator.hasNext();) {
 //            SAMRecord next = (SAMRecord) iterator.next();
-//            System.out.println(next.getReadString());
+//            System.out.println(next.getReferencePositionAtReadPosition(1));
 ////
 //        }
     }

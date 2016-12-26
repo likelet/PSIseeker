@@ -20,6 +20,7 @@ public class PSIout {
     private int position; // 1 based  position
     private String strand;// strand information
     private boolean strandB;//boolean format for strand
+    private char exbase=' ';//base at previous position
     private char base= ' '; // nuclic acid at candited position
     private String readsString ="";
     private int supporCountInTreat=0;
@@ -254,6 +255,18 @@ public class PSIout {
         this.chr = chr;
     }
 
+    public char getExbase() {
+        return exbase;
+    }
+
+    public void setExbase(char exbase) {
+        this.exbase = exbase;
+    }
+
+    
+    
+    
+    
     public void add1supporCountInTreat(){
         this.supporCountInTreat++;
     }
@@ -312,7 +325,7 @@ public class PSIout {
     
     @Override
     public String toString() {
-        return chr + "\t" + position + "\t" + base + "\t"+readsString+"\t"+strand+"\t" + supporCountInTreat + "\t" + totalCountInTreat +"\t" + supporCountControl +"\t" + totalCountControl + "\t" + Pvalue + "\t" + adjustP ;
+        return chr + "\t" + position + "\t" +exbase+"\t"+ base + "\t"+readsString+"\t"+strand+"\t" + supporCountInTreat + "\t" + totalCountInTreat +"\t" + supporCountControl +"\t" + totalCountControl + "\t" + Pvalue + "\t" + adjustP ;
     }
 
     

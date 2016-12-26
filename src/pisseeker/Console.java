@@ -41,7 +41,7 @@ public class Console {
                     + ToolsforCMD.print_ansi_CYAN(" <TreatBam(sorted)> <ControlBan(sorted)> <outputfile> [optional parameters] "));
             System.out.println(ToolsforCMD.print_ansi_YELLOW("Calling sites with input library(Parallel Mode) :   \r\n\t\t")
                     + ToolsforCMD.print_ansi_GREEN("java -jar PSIseeker.jar -runMthread")
-                    + ToolsforCMD.print_ansi_CYAN(" <TreatBam(sorted)> <ControlBan(sorted)> <outputfile> <threadnum> [optional parameters] "));
+                    + ToolsforCMD.print_ansi_CYAN(" <TreatBam(sorted)> <ControlBan(sorted)> <outputfile> <genome> <threadnum> [optional parameters] "));
 
             System.out.println(ToolsforCMD.print_ansi_WHITE("Extra paramters for options"));
             System.out.println(ToolsforCMD.print_ansi_RED("\r\n\t\t-covT\t ")
@@ -56,13 +56,13 @@ public class Console {
             psiseeker.process();
             psiseeker.print(args[3]);
         } else if (args[0].endsWith("-runMthread")) {
-            PSIseekerParallel psiseeker = new PSIseekerParallel(args[1], args[2]);
+            PSIseekerParallel psiseeker = new PSIseekerParallel(args[1], args[2],args[3]);
             if (FunctionClass.getArgsParameter(args, "-covT") != null) {
                 psiseeker.filternumber = Integer.parseInt(FunctionClass.getArgsParameter(args, "-covT"));
                 System.out.println(psiseeker.getFilternumber() + "minimun reads threshold is applied for analysis");
             }
             psiseeker.process();
-            psiseeker.print(args[3]);
+            psiseeker.print(args[4]);
         }
         
         
