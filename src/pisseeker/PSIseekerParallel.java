@@ -44,7 +44,7 @@ public class PSIseekerParallel {
     public  int Thread=4;
     public String tbam;
     public String cbam;
-    public String genomefile;
+    public IndexedFastaSequenceFile Indexgenomefile;
     //storage chrome and position information
     private HashMap<String, HashSet<PSIout>> positiveResultMap = new HashMap<String, HashSet<PSIout>>();// result in positve strand 
     private HashMap<String, HashSet<PSIout>> negativeResultMap = new HashMap<String, HashSet<PSIout>>();// result in negative strand;
@@ -63,8 +63,8 @@ public class PSIseekerParallel {
         this.tbam=tbam;
         File bamfile1 = new File(tbam);
         File bamfile2 = new File(cbam);
-        this.genomefile=genomefile;
-        srt = SamReaderFactory.makeDefault().referenceSequence(new File(genomefile)).open(
+        this.Indexgenomefile=new IndexedFastaSequenceFile (new File(genomefile));;
+        srt = SamReaderFactory.makeDefault().open(
                 SamInputResource.of(bamfile1).
                 index(new File(bamfile1.getAbsolutePath() + ".bai"))
         );
@@ -79,12 +79,12 @@ public class PSIseekerParallel {
         this.tbam=tbam;
         File bamfile1 = new File(tbam);
         File bamfile2 = new File(cbam);
-        this.genomefile=genomefile;
-        srt = SamReaderFactory.makeDefault().referenceSequence(new File(genomefile)).open(
+        this.Indexgenomefile=new IndexedFastaSequenceFile (new File(genomefile));;
+        srt = SamReaderFactory.makeDefault().open(
                 SamInputResource.of(bamfile1).
                 index(new File(bamfile1.getAbsolutePath() + ".bai"))
         );
-      
+    
         this.initialize();
     }
     
@@ -127,7 +127,7 @@ public class PSIseekerParallel {
                     HashSet<PSIout> pomap = new HashSet<PSIout>();
                     PSIout po = new PSIout(chrome, end, strand);
                     po.setBase(new DNAsequenceProcess().getReverseComplimentary(sitem.getReadString()).charAt(0));
-//                    po.setExbase(sitem.);
+                    po.setExbase(Indexgenomefile.getSequence(chrome).getBaseString().charAt(end+1));
                     po.setReadsString(sitem.getReadString());
                     pomap.add(po);
                     negativeResultMap.put(chrome, pomap);
@@ -135,6 +135,7 @@ public class PSIseekerParallel {
                     PSIout po = new PSIout(chrome, end, strand);
                     po.setBase(new DNAsequenceProcess().getReverseComplimentary(sitem.getReadString()).charAt(0));
                     po.setReadsString(sitem.getReadString());
+                    po.setExbase(Indexgenomefile.getSequence(chrome).getBaseString().charAt(end+1));
                     negativeResultMap.get(chrome).add(po);
                 }
             } else if (!strand) {
@@ -142,6 +143,7 @@ public class PSIseekerParallel {
                     HashSet<PSIout> pomap = new HashSet<PSIout>();
                     PSIout po = new PSIout(chrome, start, strand);
                     po.setBase(sitem.getReadString().charAt(0));
+                    po.setExbase(Indexgenomefile.getSequence(chrome).getBaseString().charAt(start-1));
                     po.setReadsString(sitem.getReadString());
                     pomap.add(po);
                     positiveResultMap.put(chrome, pomap);
@@ -149,6 +151,7 @@ public class PSIseekerParallel {
                     PSIout po = new PSIout(chrome, start, strand);
 //                    System.out.println(chrome);
                     po.setBase(sitem.getReadString().charAt(0));
+                    po.setExbase(Indexgenomefile.getSequence(chrome).getBaseString().charAt(start-1));
                     po.setReadsString(sitem.getReadString());
                     positiveResultMap.get(chrome).add(po);
                 }
@@ -380,7 +383,7 @@ public class PSIseekerParallel {
 //
   
     IndexedFastaSequenceFile  genomeFile=new IndexedFastaSequenceFile (new File(genomefile));
-        System.out.println(genomeFile.getSequence("chr2L"));
+        System.out.println(genomeFile.getSequence("chr2L").getBaseString().charAt(0));
 //        System.out.println(genomeFile.getSequenceDictionary().getSequence("chr2L"));
 //SAMRecordIterator tempit1=srt.iterator();
 //        
