@@ -13,9 +13,7 @@ import htsjdk.samtools.SAMSequenceRecord;
 import htsjdk.samtools.SamInputResource;
 import htsjdk.samtools.SamReader;
 import htsjdk.samtools.SamReaderFactory;
-import htsjdk.samtools.reference.FastaSequenceFile;
 import htsjdk.samtools.reference.IndexedFastaSequenceFile;
-import htsjdk.samtools.reference.ReferenceSequenceFile;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -161,33 +159,30 @@ public class PSIseekerParallel {
         iter.close();
     }
     
+    //run analysis parallel
     public void process() throws IOException {
-        
 
         System.out.println("Start Counting reads in parrallel mode ");
         try {
             // run paralla
-            ExecutorService pool = Executors.newFixedThreadPool(this.Thread);//creat a new thread pool
-            
+            ExecutorService pool = Executors.newFixedThreadPool(this.Thread);//Creat a new thread pool
             runPSIseekerThread runPSIseekerthread = null;
             for (Iterator<String> iterator = chrlist.iterator(); iterator.hasNext();) {
                 String chr = iterator.next();
-                runPSIseekerthread=new runPSIseekerThread(chr,negativeResultMap.get(chr),tbam,cbam);
+                runPSIseekerthread = new runPSIseekerThread(chr, negativeResultMap.get(chr), tbam, cbam);
                 pool.submit(runPSIseekerthread);
             }
             for (Iterator<String> iterator = chrlist.iterator(); iterator.hasNext();) {
                 String chr = iterator.next();
-                runPSIseekerthread=new runPSIseekerThread(chr,positiveResultMap.get(chr),tbam,cbam);
+                runPSIseekerthread = new runPSIseekerThread(chr, positiveResultMap.get(chr), tbam, cbam);
                 pool.submit(runPSIseekerthread);
             }
-            
             pool.shutdown();
             pool.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
             // write out 
         } catch (InterruptedException ex) {
             Logger.getLogger(PSIseekerParallel.class.getName()).log(Level.SEVERE, null, ex);
         }
-
     }
 
     class runPSIseekerThread implements Runnable {
@@ -228,9 +223,9 @@ public class PSIseekerParallel {
             } catch (IOException ex) {
                 Logger.getLogger(PSIseekerParallel.class.getName()).log(Level.SEVERE, null, ex);
             }
-            
         }
 
+        //Count reads from treated bamfile
         public void CountReadsTreat(PSIout po, SAMRecordIterator readsIt) {
             for (Iterator<SAMRecord> iterator = readsIt; iterator.hasNext();) {
                 SAMRecord sr = iterator.next();
@@ -253,9 +248,9 @@ public class PSIseekerParallel {
 
             }
             readsIt.close();
-
         }
 
+        //Count reads from Control bamfile
         public void CountReadsControl(PSIout po, SAMRecordIterator readsIt) {
             for (Iterator<SAMRecord> iterator = readsIt; iterator.hasNext();) {
                 SAMRecord sr = iterator.next();
@@ -272,9 +267,7 @@ public class PSIseekerParallel {
                         }
                         po.add1totalCountControl();
                     }
-
                 }
-
             }
             readsIt.close();
         }
@@ -289,7 +282,6 @@ public class PSIseekerParallel {
         }
 
         public boolean iscoverPositve(int pos, SAMRecord sr) {
-
             if (sr.getAlignmentStart() == pos) {
                 return true;
             } else {
@@ -307,11 +299,9 @@ public class PSIseekerParallel {
 
         for (Iterator chrit = chrlist.iterator(); chrit.hasNext();) {
             String chr = (String) chrit.next();
-
             HashSet<PSIout> negpomap = negativeResultMap.get(chr);
             for (Iterator poit = negpomap.iterator(); poit.hasNext();) {
                 PSIout pso = (PSIout) poit.next();
-
                 //remove reads less than 2 
                 if (pso.getSupporCountInTreat() < this.filternumber) {
                     continue;
@@ -326,7 +316,6 @@ public class PSIseekerParallel {
                 pso.fishertest();
                 plist.add(pso.getPvalue());
                 templist.add(pso);
-
             }
             HashSet<PSIout> pospomap = positiveResultMap.get(chr);
             for (Iterator poit = pospomap.iterator(); poit.hasNext();) {
@@ -345,7 +334,6 @@ public class PSIseekerParallel {
                 pso.fishertest();
                 plist.add(pso.getPvalue());
                 templist.add(pso);
-
             }
         }
         //FDR calculation && write out
@@ -355,7 +343,6 @@ public class PSIseekerParallel {
             psi.setAdjustP(fdrlist.get(i));
             fw.append(psi.toString() + "\t" + "\n");
         }
-
         fw.flush();
         fw.close();
     }
@@ -368,21 +355,18 @@ public class PSIseekerParallel {
         this.filternumber = filternumber;
     }
 
-    
-    
-    
     public static void main(String[] args) throws IOException {
 //        new PSIseekerParallel("test/SMULTQ02-1.clean.fq.gz.Aligned.sortedByCoord.out.bam", "test/SMULTQ02-2.clean.fq.gz.Aligned.sortedByCoord.out.bam", "test/result.txt","2");
 
         File bamfile1 = new File("E:\\迅雷下载\\SMULTQ02-4.clean.fq.gz.Aligned.sortedByCoord.out.bam");
-        String genomefile="E:\\迅雷下载\\dm6.fa";
-          SamReader srt = SamReaderFactory.makeDefault().referenceSequence(new File(genomefile)).open(
+        String genomefile = "E:\\迅雷下载\\dm6.fa";
+        SamReader srt = SamReaderFactory.makeDefault().referenceSequence(new File(genomefile)).open(
                 SamInputResource.of(bamfile1).
                 index(new File(bamfile1.getAbsolutePath() + ".bai"))
         );
 //
-  
-    IndexedFastaSequenceFile  genomeFile=new IndexedFastaSequenceFile (new File(genomefile));
+
+        IndexedFastaSequenceFile genomeFile = new IndexedFastaSequenceFile(new File(genomefile));
         System.out.println(genomeFile.getSequence("chr2L").getBaseString().charAt(0));
 //        System.out.println(genomeFile.getSequenceDictionary().getSequence("chr2L"));
 //SAMRecordIterator tempit1=srt.iterator();

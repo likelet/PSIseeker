@@ -81,19 +81,10 @@ public class PSIseeker {
     }
 
     public void process() throws IOException {
-
-//    
         // in one specific chrome
         ArrayList<SAMRecord> samlistTreat = new ArrayList<SAMRecord>();
-//        String chrome="chr2L";
-//  
-//        
-
         //first cycle initialized chromesome and positions
         SAMRecordIterator iter = srt.iterator();
-        
-//        SAMRecordIterator iter = srt.queryContained("chr2L", 0,0);
-        
         //get chrome information
         SAMFileHeader fileHeader = srt.getFileHeader();
         SAMSequenceDictionary seqDic = fileHeader.getSequenceDictionary();
