@@ -140,11 +140,13 @@ public class PSIseekerParallel {
 
                     PSIout po = new PSIout(chrome, end, strand);
                     po.setBase(new DNAsequenceProcess().getReverseComplimentary(sitem.getReadString()).charAt(0));
+                    po.setReadsString(sitem.getReadString());
                     pomap.add(po);
                     negativeResultMap.put(chrome, pomap);
                 } else {
                     PSIout po = new PSIout(chrome, end, strand);
                     po.setBase(new DNAsequenceProcess().getReverseComplimentary(sitem.getReadString()).charAt(0));
+                    po.setReadsString(sitem.getReadString());
                     negativeResultMap.get(chrome).add(po);
                 }
             } else if (!strand) {
@@ -152,12 +154,14 @@ public class PSIseekerParallel {
                     HashSet<PSIout> pomap = new HashSet<PSIout>();
                     PSIout po = new PSIout(chrome, start, strand);
                     po.setBase(sitem.getReadString().charAt(0));
+                    po.setReadsString(sitem.getReadString());
                     pomap.add(po);
                     positiveResultMap.put(chrome, pomap);
                 } else {
                     PSIout po = new PSIout(chrome, start, strand);
 //                    System.out.println(chrome);
                     po.setBase(sitem.getReadString().charAt(0));
+                    po.setReadsString(sitem.getReadString());
                     positiveResultMap.get(chrome).add(po);
                 }
             }
