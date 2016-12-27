@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package pisseeker;
 
 import htsjdk.samtools.SAMFileHeader;
@@ -14,6 +15,7 @@ import htsjdk.samtools.SamInputResource;
 import htsjdk.samtools.SamReader;
 import htsjdk.samtools.SamReaderFactory;
 import htsjdk.samtools.reference.IndexedFastaSequenceFile;
+import htsjdk.samtools.util.IntervalTree;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -22,30 +24,34 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import pisseeker.MultipleCorrection.FDR;
-import pisseeker.pub.ToolsforCMD;
-
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import pisseeker.MultipleCorrection.FDR;
 import pisseeker.pub.DNAsequenceProcess;
+import pisseeker.pub.ToolsforCMD;
 
 /**
  *
- * @author zhaoqi
+ * @author Administrator
+ * @since 2016-12-27
+ * @coding time 16:57:48
+ * @author Qi Zhao
  */
-public class PSIseekerParallel {
-
-    private final SamReader srt;
+public class PSIseekerInterval {
+private final SamReader srt;
     public  int Thread=1;
     public String tbam;
     public String cbam;
-    public String genomefile;
+    public IndexedFastaSequenceFile Indexgenomefile;
     //storage chrome and position information
     private HashMap<String, HashSet<PSIout>> positiveResultMap = new HashMap<String, HashSet<PSIout>>();// result in positve strand 
     private HashMap<String, HashSet<PSIout>> negativeResultMap = new HashMap<String, HashSet<PSIout>>();// result in negative strand;
+    
+    private HashMap<String,IntervalTree> positiveTreeMap=new HashMap<String,IntervalTree> ();
+    private HashMap<String,IntervalTree> negativeTreeMap=new HashMap<String,IntervalTree> ();
 //    private HashMap<Integer,PSIout> pomap=new HashMap();
     public int filternumber = 2;//at least 2 read support
     public HashSet<String> chrlist = new HashSet<String>();
@@ -56,28 +62,25 @@ public class PSIseekerParallel {
     //tbam and cbam are both sorted bamfile 
     
     
-    public PSIseekerParallel(String tbam, String cbam,String genomefile) throws IOException {
+    public PSIseekerInterval(String tbam, String cbam,String genomefile) throws IOException {
         this.cbam=cbam;
         this.tbam=tbam;
         File bamfile1 = new File(tbam);
         File bamfile2 = new File(cbam);
-        this.genomefile=genomefile;
+        this.Indexgenomefile=new IndexedFastaSequenceFile (new File(genomefile));;
         srt = SamReaderFactory.makeDefault().open(
                 SamInputResource.of(bamfile1).
                 index(new File(bamfile1.getAbsolutePath() + ".bai"))
         );
        
         this.initialize();
-        
-        
-        
     }
-    public PSIseekerParallel(String tbam, String cbam,String genomefile, String out) throws IOException {
+    public PSIseekerInterval(String tbam, String cbam,String genomefile, String out) throws IOException {
         this.cbam=cbam;
         this.tbam=tbam;
         File bamfile1 = new File(tbam);
         File bamfile2 = new File(cbam);
-        this.genomefile=genomefile;
+        this.Indexgenomefile=new IndexedFastaSequenceFile (new File(genomefile));;
         srt = SamReaderFactory.makeDefault().open(
                 SamInputResource.of(bamfile1).
                 index(new File(bamfile1.getAbsolutePath() + ".bai"))
@@ -98,7 +101,7 @@ public class PSIseekerParallel {
         List<SAMSequenceRecord> seqRecList = seqDic.getSequences();
         for (SAMSequenceRecord seqRec : seqRecList) {
             //store chr information
-            this.chrlist.add(seqRec.getSequenceName());
+           this.chrlist.add(seqRec.getSequenceName());
         }
        
         System.out.println("Initializing candidate site infomation");
@@ -116,38 +119,47 @@ public class PSIseekerParallel {
             String chrome = sitem.getReferenceName();
             count++;
             if (strand) {
-                if (!negativeResultMap.containsKey(chrome)) {
-                    HashSet<PSIout> pomap = new HashSet<PSIout>();
-                    PSIout po = new PSIout(chrome, end, strand);
+                if (!negativeTreeMap.containsKey(chrome)) {
+                    IntervalTree potree = new IntervalTree();
+                    PSIout po=new PSIout(chrome, end, strand);
                     po.setBase(new DNAsequenceProcess().getReverseComplimentary(sitem.getReadString()).charAt(0));
+//                    po.setExbase(Indexgenomefile.getSequence(chrome).getBaseString().charAt(end+1));
                     po.setReadsString(sitem.getReadString());
-                    pomap.add(po);
-                    negativeResultMap.put(chrome, pomap);
+                    potree.put(end+1, end, po);
+                    negativeTreeMap.put(chrome, potree);
                 } else {
                     PSIout po = new PSIout(chrome, end, strand);
                     po.setBase(new DNAsequenceProcess().getReverseComplimentary(sitem.getReadString()).charAt(0));
                     po.setReadsString(sitem.getReadString());
-                    negativeResultMap.get(chrome).add(po);
+//                    po.setExbase(Indexgenomefile.getSequence(chrome).getBaseString().charAt(end+1));
+                    negativeTreeMap.get(chrome).put(end+1, end, po);
                 }
             } else if (!strand) {
-                if (!positiveResultMap.containsKey(chrome)) {
-                    HashSet<PSIout> pomap = new HashSet<PSIout>();
+                if (!positiveTreeMap.containsKey(chrome)) {
+                    IntervalTree potree = new IntervalTree();
                     PSIout po = new PSIout(chrome, start, strand);
                     po.setBase(sitem.getReadString().charAt(0));
+//                    po.setExbase(Indexgenomefile.getSequence(chrome).getBaseString().charAt(start-1));
                     po.setReadsString(sitem.getReadString());
-                    pomap.add(po);
-                    positiveResultMap.put(chrome, pomap);
+                    potree.put(start-1, start, po);
+                    positiveTreeMap.put(chrome, potree);
                 } else {
                     PSIout po = new PSIout(chrome, start, strand);
 //                    System.out.println(chrome);
                     po.setBase(sitem.getReadString().charAt(0));
+//                    po.setExbase(Indexgenomefile.getSequence(chrome).getBaseString().charAt(start - 1));
                     po.setReadsString(sitem.getReadString());
-                    positiveResultMap.get(chrome).add(po);
+                    positiveTreeMap.get(chrome).put(start-1, start, po);
                 }
             }
         }
         itertemp.close();
-        
+        try {
+            //release  memory resources
+            this.Indexgenomefile.close();
+        } catch (IOException ex) {
+            Logger.getLogger(PSIseekerParallel.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
     
     //run analysis parallel
@@ -339,7 +351,6 @@ public class PSIseekerParallel {
             }
         }
         //FDR calculation && write out
-        IndexedFastaSequenceFile Indexgenomefile=new IndexedFastaSequenceFile (new File(genomefile));;
         ArrayList<Double> fdrlist = new FDR(plist).getFdrDoublelist();
         for (int i = 0; i < templist.size(); i++) {
             PSIout psi = templist.get(i);
@@ -354,12 +365,6 @@ public class PSIseekerParallel {
         }
         fw.flush();
         fw.close();
-        try {
-            //release  memory resources
-            Indexgenomefile.close();
-        } catch (IOException ex) {
-            Logger.getLogger(PSIseekerParallel.class.getName()).log(Level.SEVERE, null, ex);
-        }
     }
 
     public int getFilternumber() {
@@ -370,28 +375,4 @@ public class PSIseekerParallel {
         this.filternumber = filternumber;
     }
 
-    public static void main(String[] args) throws IOException {
-        PSIseekerParallel ps=new PSIseekerParallel("E:\\迅雷下载\\SMULTQ02-3.clean.fq.gz.Aligned.sortedByCoord.out.bam", "E:\\迅雷下载\\SMULTQ02-3.clean.fq.gz.Aligned.sortedByCoord.out.bam","E:\\迅雷下载\\dm6.fa" );
-        ps.process();
-        ps.print("out.txt");
-//        System.out.println("ABCD".charAt(1));
-//        File bamfile1 = new File("E:\\迅雷下载\\SMULTQ02-3.clean.fq.gz.Aligned.sortedByCoord.out.bam");
-//        String genomefile = "E:\\迅雷下载\\dm6.fa";
-//        SamReader srt = SamReaderFactory.makeDefault().referenceSequence(new File(genomefile)).open(
-//                SamInputResource.of(bamfile1).
-//                index(new File(bamfile1.getAbsolutePath() + ".bai"))
-//        );
-////
-//
-//        IndexedFastaSequenceFile genomeFile = new IndexedFastaSequenceFile(new File(genomefile));
-//        System.out.println(genomeFile.getSequence("chr2L").getBaseString().charAt(1));
-////        System.out.println(genomeFile.getSequenceDictionary().getSequence("chr2L"));
-//SAMRecordIterator tempit1=srt.iterator();
-//        
-//        for (Iterator iterator = tempit1; iterator.hasNext();) {
-//            SAMRecord next = (SAMRecord) iterator.next();
-//            System.out.println(next.getReferencePositionAtReadPosition(1));
-////
-//        }
-    }
 }
