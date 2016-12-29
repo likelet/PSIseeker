@@ -34,6 +34,10 @@ public class PSIout {
     private double Pvalue=1;//fisher test Pvalue
     
     private double adjustP = 1;//ajust Pvalue
+    
+    
+    
+    
 
     public PSIout(String chr, int position) {
         this.chr = chr;
@@ -322,11 +326,28 @@ public class PSIout {
 
     }
     
+    //TEST attributive
+    private double enrichmentScore=0;
+
+    public double getEnrichmentScore() {
+        return enrichmentScore;
+    }
+
+    public void setEnrichmentScore(double enrichmentScore) {
+        this.enrichmentScore = enrichmentScore;
+    }
+    
+    
     
     @Override
     public String toString() {
         return chr + "\t" + position + "\t" +exbase+"\t"+ base + "\t"+readsString+"\t"+strand+"\t" + supporCountInTreat + "\t" + totalCountInTreat +"\t" + supporCountControl +"\t" + totalCountControl + "\t" + Pvalue + "\t" + adjustP ;
     }
+    
+    public String toString2() {
+        return chr + "\t" + position + "\t" +exbase+"\t"+ base + "\t"+readsString+"\t"+strand+"\t" + supporCountInTreat + "\t" + totalCountInTreat +"\t" + supporCountControl +"\t" + totalCountControl + "\t" + Pvalue + "\t" + adjustP+"\t"+this.enrichmentScore ;
+    }
+    
 
     
     

@@ -47,7 +47,7 @@ public class PSIseekerParallel {
     private HashMap<String, HashSet<PSIout>> positiveResultMap = new HashMap<String, HashSet<PSIout>>();// result in positve strand 
     private HashMap<String, HashSet<PSIout>> negativeResultMap = new HashMap<String, HashSet<PSIout>>();// result in negative strand;
 //    private HashMap<Integer,PSIout> pomap=new HashMap();
-    public int filternumber = 2;//at least 2 read support
+    public int filternumber = 5;//at least 2 read support
     public HashSet<String> chrlist = new HashSet<String>();
 
     /**
@@ -208,6 +208,7 @@ public class PSIseekerParallel {
                 CountReadsTreat(pso, tempit1);
                 CountReadsControl(pso, tempit2);
             }
+            
             try {
                 subsrt.close();
                 subsrc.close();
@@ -297,11 +298,12 @@ public class PSIseekerParallel {
         FileWriter fw = new FileWriter(fileout);
         ArrayList<PSIout> templist = new ArrayList<PSIout>();
         ArrayList<Double> plist = new ArrayList<Double>();
-        fw.append("chr\tposition\tbase\tstrand\tsupporCountInTreat\ttotalCountInTreat\tsupporCountControl\ttotalCountControl\tPvalue\tadjustP\n");
+        fw.append("chr\tposition\texbase\tbase\trepresentSeq\tstrand\tsupporCountInTreat\ttotalCountInTreat\tsupporCountControl\ttotalCountControl\tPvalue\tadjustP\n");
 
         for (Iterator chrit = chrlist.iterator(); chrit.hasNext();) {
             String chr = (String) chrit.next();
             HashSet<PSIout> negpomap = negativeResultMap.get(chr);
+            if(negpomap==null) continue;
             for (Iterator poit = negpomap.iterator(); poit.hasNext();) {
                 PSIout pso = (PSIout) poit.next();
                 //remove reads less than 2 
@@ -312,14 +314,25 @@ public class PSIseekerParallel {
                 if (pso.getTotalCountControl() < this.filternumber) {
                     continue;
                 }
-                if (pso.getSupporCountInTreat() / pso.getTotalCountInTreat() < pso.getSupporCountControl() / pso.getTotalCountControl()) {
-                    continue;
+                 pso.fishertest();
+                double a=pso.getSupporCountControl();
+                double b=pso.getTotalCountControl();
+                if (pso.getSupporCountControl() == 0) {
+                    a = 1;
                 }
-                pso.fishertest();
+                if (pso.getTotalCountControl() == 0) {
+                    b = 1;
+                }
+//                System.out.println(pso.toString2());
+                double tempa=((double)pso.getSupporCountInTreat() / (double)pso.getTotalCountInTreat()) / (a / b);
+//                System.out.println(tempa);
+                pso.setEnrichmentScore(tempa);
+                
                 plist.add(pso.getPvalue());
                 templist.add(pso);
             }
             HashSet<PSIout> pospomap = positiveResultMap.get(chr);
+            if(negpomap==null) continue;
             for (Iterator poit = pospomap.iterator(); poit.hasNext();) {
                 PSIout pso = (PSIout) poit.next();
                 if (pso.getSupporCountInTreat() < this.filternumber) {
@@ -330,10 +343,25 @@ public class PSIseekerParallel {
                     continue;
                 }
                 // remove site show lower propotion in treatment
-                if (pso.getSupporCountInTreat() / pso.getTotalCountInTreat() < pso.getSupporCountControl() / pso.getTotalCountControl()) {
-                    continue;
-                }
+//                if (pso.getSupporCountInTreat() / pso.getTotalCountInTreat() < pso.getSupporCountControl() / pso.getTotalCountControl()) {
+//                    continue;
+//                }
+                // avoiding zero devider
                 pso.fishertest();
+                double a=pso.getSupporCountControl();
+                double b=pso.getTotalCountControl();
+                if (pso.getSupporCountControl() == 0) {
+                    a = 1;
+                }
+                if (pso.getTotalCountControl() == 0) {
+                    b = 1;
+                }
+//                System.out.println(pso.toString2());
+                double tempa=((double)pso.getSupporCountInTreat() / (double)pso.getTotalCountInTreat()) / (a / b);
+//                System.out.println(tempa);
+                pso.setEnrichmentScore(tempa);
+                
+
                 plist.add(pso.getPvalue());
                 templist.add(pso);
             }
@@ -345,12 +373,12 @@ public class PSIseekerParallel {
             PSIout psi = templist.get(i);
             
             if(psi.getStrand().endsWith("+")){
-                psi.setBase(Indexgenomefile.getSequence(psi.getChr()).getBaseString().charAt(psi.getPosition()-2));
+                psi.setExbase(Indexgenomefile.getSequence(psi.getChr()).getBaseString().charAt(psi.getPosition()-2));
             }else{
-                psi.setBase(Indexgenomefile.getSequence(psi.getChr()).getBaseString().charAt(psi.getPosition()));
+                psi.setExbase(Indexgenomefile.getSequence(psi.getChr()).getBaseString().charAt(psi.getPosition()));
             }
             psi.setAdjustP(fdrlist.get(i));
-            fw.append(psi.toString() + "\t" + "\n");
+            fw.append(psi.toString2() + "\t" + "\n");
         }
         fw.flush();
         fw.close();
@@ -371,7 +399,7 @@ public class PSIseekerParallel {
     }
 
     public static void main(String[] args) throws IOException {
-        PSIseekerParallel ps=new PSIseekerParallel("E:\\迅雷下载\\SMULTQ02-3.clean.fq.gz.Aligned.sortedByCoord.out.bam", "E:\\迅雷下载\\SMULTQ02-3.clean.fq.gz.Aligned.sortedByCoord.out.bam","E:\\迅雷下载\\dm6.fa" );
+        PSIseekerParallel ps=new PSIseekerParallel("E:\\迅雷下载\\SMULTQ02-3_chr4.bam", "E:\\迅雷下载\\SMULTQ02-4_chr4.bam","E:\\迅雷下载\\dm6.fa" );
         ps.process();
         ps.print("out.txt");
 //        System.out.println("ABCD".charAt(1));
