@@ -327,7 +327,7 @@ public class PSIout {
     }
     
     //TEST attributive
-    private double enrichmentScore=0;
+    private double enrichmentScore=1;
 
     public double getEnrichmentScore() {
         return enrichmentScore;
@@ -337,7 +337,46 @@ public class PSIout {
         this.enrichmentScore = enrichmentScore;
     }
     
-    
+        private double poissonP;
+
+    /**
+     * Get the value of poissonP
+     *
+     * @return the value of poissonP
+     */
+    public double getPoissonP() {
+        return poissonP;
+    }
+
+    /**
+     * Set the value of poissonP
+     *
+     * @param poissonP new value of poissonP
+     */
+    public void setPoissonP(double poissonP) {
+        this.poissonP = poissonP;
+    }
+
+    private double swapFDR=1;
+
+    /**
+     * Get the value of swapFDR
+     *
+     * @return the value of swapFDR
+     */
+    public double getSwapFDR() {
+        return swapFDR;
+    }
+
+    /**
+     * Set the value of swapFDR
+     *
+     * @param swapFDR new value of swapFDR
+     */
+    public void setSwapFDR(double swapFDR) {
+        this.swapFDR = swapFDR;
+    }
+
     
     @Override
     public String toString() {

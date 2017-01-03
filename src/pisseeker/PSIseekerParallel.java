@@ -5,6 +5,7 @@
  */
 package pisseeker;
 
+import htsjdk.samtools.CigarElement;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMRecordIterator;
@@ -43,6 +44,8 @@ public class PSIseekerParallel {
     public String tbam;
     public String cbam;
     public String genomefile;
+//    private libsize
+    
     //storage chrome and position information
     private HashMap<String, HashSet<PSIout>> positiveResultMap = new HashMap<String, HashSet<PSIout>>();// result in positve strand 
     private HashMap<String, HashSet<PSIout>> negativeResultMap = new HashMap<String, HashSet<PSIout>>();// result in negative strand;
@@ -298,7 +301,7 @@ public class PSIseekerParallel {
         FileWriter fw = new FileWriter(fileout);
         ArrayList<PSIout> templist = new ArrayList<PSIout>();
         ArrayList<Double> plist = new ArrayList<Double>();
-        fw.append("chr\tposition\texbase\tbase\trepresentSeq\tstrand\tsupporCountInTreat\ttotalCountInTreat\tsupporCountControl\ttotalCountControl\tPvalue\tadjustP\n");
+        fw.append("chr\tposition\texbase\tbase\trepresentSeq\tstrand\tsupporCountInTreat\ttotalCountInTreat\tsupporCountControl\ttotalCountControl\tPvalue\tadjustP\tenrichmentScore\n");
 
         for (Iterator chrit = chrlist.iterator(); chrit.hasNext();) {
             String chr = (String) chrit.next();
@@ -375,7 +378,7 @@ public class PSIseekerParallel {
             if(psi.getStrand().endsWith("+")){
                 psi.setExbase(Indexgenomefile.getSequence(psi.getChr()).getBaseString().charAt(psi.getPosition()-2));
             }else{
-                psi.setExbase(Indexgenomefile.getSequence(psi.getChr()).getBaseString().charAt(psi.getPosition()));
+                psi.setExbase(DNAsequenceProcess.getChargefBase(Indexgenomefile.getSequence(psi.getChr()).getBaseString().charAt(psi.getPosition())));
             }
             psi.setAdjustP(fdrlist.get(i));
             fw.append(psi.toString2() + "\t" + "\n");
@@ -399,16 +402,43 @@ public class PSIseekerParallel {
     }
 
     public static void main(String[] args) throws IOException {
-        PSIseekerParallel ps=new PSIseekerParallel("E:\\迅雷下载\\SMULTQ02-3_chr4.bam", "E:\\迅雷下载\\SMULTQ02-4_chr4.bam","E:\\迅雷下载\\dm6.fa" );
-        ps.process();
-        ps.print("out.txt");
+//        PSIseekerParallel ps=new PSIseekerParallel("E:\\迅雷下载\\SMULTQ02-3_chr4.bam", "E:\\迅雷下载\\SMULTQ02-4_chr4.bam","E:\\迅雷下载\\dm6.fa" );
+//        ps.process();
+//        ps.print("out.txt");
 //        System.out.println("ABCD".charAt(1));
 //        File bamfile1 = new File("E:\\迅雷下载\\SMULTQ02-3.clean.fq.gz.Aligned.sortedByCoord.out.bam");
 //        String genomefile = "E:\\迅雷下载\\dm6.fa";
-//        SamReader srt = SamReaderFactory.makeDefault().referenceSequence(new File(genomefile)).open(
-//                SamInputResource.of(bamfile1).
-//                index(new File(bamfile1.getAbsolutePath() + ".bai"))
-//        );
+        SamReader srt = SamReaderFactory.makeDefault().open(
+                SamInputResource.of("E:\\迅雷下载\\SMULTQ02-3_chr4.bam").
+                index(new File(new File("E:\\迅雷下载\\SMULTQ02-3_chr4.bam").getAbsolutePath() + ".bai")
+        ));
+        SAMRecordIterator tempit1=srt.queryOverlapping("chr4", 0, 0);
+        for (Iterator iterator = tempit1; iterator.hasNext();) {
+            SAMRecord next = (SAMRecord) iterator.next();
+//            System.out.print(next.getCigar()+"\t");
+                if (next.getReadUnmappedFlag())continue;
+                if (next.getDuplicateReadFlag()) continue;
+                if (next.getNotPrimaryAlignmentFlag()) continue;
+                if (next.getReadFailsVendorQualityCheckFlag()) continue;
+                if(next.getMappingQuality()<=2) continue;
+            List<CigarElement> ce=next.getCigar().getCigarElements(); 
+            
+            int le1=0;
+            for (int i = 0; i < ce.size(); i++) {
+                int le=ce.get(i).getLength();
+            String op=ce.get(i).getOperator().toString();
+                if (op.equals("S")) {
+                    le1 += le;
+                }
+            }
+            if(le1!=0){
+//                System.out.println((double)le1/next.getReadLength()+"\t"+(next.getReadLength()-le1) );
+                System.out.println((next.getReadLength()-le1) );
+            }
+            
+
+//
+        }
 ////
 //
 //        IndexedFastaSequenceFile genomeFile = new IndexedFastaSequenceFile(new File(genomefile));
