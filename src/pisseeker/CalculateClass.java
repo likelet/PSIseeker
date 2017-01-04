@@ -6,9 +6,14 @@
 
 package pisseeker;
 
+import htsjdk.samtools.Cigar;
+import htsjdk.samtools.CigarElement;
+import htsjdk.samtools.SAMFileHeader;
+import htsjdk.samtools.SAMRecord;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  *
@@ -33,6 +38,14 @@ public class CalculateClass {
     }
     
     
+    //get cigar reads with N covered posision N
+   
+   
     
-    
+    public static void main(String[] args) {
+        SAMRecord sr =new SAMRecord(new SAMFileHeader());
+        sr.setAlignmentStart(100);
+        sr.setCigarString("23M100N20M");
+//        System.out.println(CalculateClass.getMstart(223, sr));
+    }
 }

@@ -5,6 +5,8 @@
  */
 package pisseeker;
 
+import htsjdk.samtools.Cigar;
+import htsjdk.samtools.CigarElement;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMRecordIterator;
@@ -28,9 +30,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import pisseeker.MultipleCorrection.FDR;
 import pisseeker.pub.DNAsequenceProcess;
-import pisseeker.pub.ToolsforCMD;
 
 /**
  *
@@ -43,7 +43,7 @@ public final class PSIseekerInterval {
 
     private final SamReader srt;
     private final SamReader src;
-    public int Thread = 1;
+    public int Thread = 3;
     public String tbam;
     public String cbam;
     public IndexedFastaSequenceFile Indexgenomefile;
@@ -101,10 +101,10 @@ public final class PSIseekerInterval {
         System.out.println("Initializing initializeTreatIntervalTree  and site infomation");
         while (itertemp.hasNext()) {
             SAMRecord sitem = (SAMRecord) itertemp.next();
-            if (sitem.getReadUnmappedFlag()) continue;
-            if (sitem.getDuplicateReadFlag()) continue;
-            if (sitem.getNotPrimaryAlignmentFlag())continue;
-            if (sitem.getReadFailsVendorQualityCheckFlag())continue;
+             if (sitem.getReadUnmappedFlag())  continue;
+            if (sitem.getDuplicateReadFlag())  continue;
+            if (sitem.getNotPrimaryAlignmentFlag())  continue;
+            if (sitem.getReadFailsVendorQualityCheckFlag()) continue;
             int end = sitem.getAlignmentEnd();
             int start = sitem.getAlignmentStart();
             boolean strand = sitem.getReadNegativeStrandFlag();//strand of the query (false for forward; true for reverse strand)
@@ -112,69 +112,39 @@ public final class PSIseekerInterval {
             treatLibsize++;
             if (strand) {
                 if (!negativeTreeTreatMap.containsKey(chrome)) {
-                    //samrecord
                     IntervalTree potree = new IntervalTree();
                     potree.put(start, end, sitem);
                     negativeTreeTreatMap.put(chrome, potree);
-                    // candidate site
-                    HashSet<PSIout> pomap = new HashSet<PSIout>();
-                    PSIout po = new PSIout(chrome, end, strand);
-                    po.setBase(new DNAsequenceProcess().getReverseComplimentary(sitem.getReadString()).charAt(0));
-                    po.setReadsString(sitem.getReadString());
-                    pomap.add(po);
-                    negativeResultMap.put(chrome, pomap);
                 } else {
                     negativeTreeTreatMap.get(chrome).put(start, end, sitem);
-                    // candidate site
-                    PSIout po = new PSIout(chrome, end, strand);
-                    po.setBase(new DNAsequenceProcess().getReverseComplimentary(sitem.getReadString()).charAt(0));
-                    po.setReadsString(sitem.getReadString());
-                    negativeResultMap.get(chrome).add(po);
                 }
             } else if (!strand) {
                 if (!positiveTreeTreatMap.containsKey(chrome)) {
                     IntervalTree potree = new IntervalTree();
                     potree.put(start, end, sitem);
                     positiveTreeTreatMap.put(chrome, potree);
-                    //positive
-                    HashSet<PSIout> pomap = new HashSet<PSIout>();
-                    PSIout po = new PSIout(chrome, start, strand);
-                    po.setBase(sitem.getReadString().charAt(0));
-                    po.setReadsString(sitem.getReadString());
-                    pomap.add(po);
-                    positiveResultMap.put(chrome, pomap);
 
                 } else {
                     positiveTreeTreatMap.get(chrome).put(start, end, sitem);
-                    //positive
-                    PSIout po = new PSIout(chrome, start, strand);
-                    po.setBase(sitem.getReadString().charAt(0));
-                    po.setReadsString(sitem.getReadString());
-                    positiveResultMap.get(chrome).add(po);
                 }
             }
         }
         itertemp.close();
     }
 
+    
+    
+    
     public void initializeControlIntervalTree() {
-         System.out.println("Initializing initializeControlIntervalTree  and site infomation");
+        System.out.println("Initializing initializeControlIntervalTree  and site infomation");
         //first cycle initialized chromesome and positions
         SAMRecordIterator itertemp = src.iterator();
         while (itertemp.hasNext()) {
             SAMRecord sitem = (SAMRecord) itertemp.next();
-            if (sitem.getReadUnmappedFlag()) {
-                continue;
-            }
-            if (sitem.getDuplicateReadFlag()) {
-                continue;
-            }
-            if (sitem.getNotPrimaryAlignmentFlag()) {
-                continue;
-            }
-            if (sitem.getReadFailsVendorQualityCheckFlag()) {
-                continue;
-            }
+            if (sitem.getReadUnmappedFlag())   continue;
+            if (sitem.getDuplicateReadFlag())  continue;
+            if (sitem.getNotPrimaryAlignmentFlag())   continue;
+            if (sitem.getReadFailsVendorQualityCheckFlag())  continue;
             int end = sitem.getAlignmentEnd();
             int start = sitem.getAlignmentStart();
             boolean strand = sitem.getReadNegativeStrandFlag();//strand of the query (false for forward; true for reverse strand)
@@ -205,31 +175,24 @@ public final class PSIseekerInterval {
         }
         itertemp.close();
     }
-
     //run analysis parallel
     public void process() throws IOException {
 
-        System.out.println("Start Counting reads in parallel mode ");
+//        System.out.println("Start Counting reads in parallel mode ");
         try {
             // run paralla
             ExecutorService pool = Executors.newFixedThreadPool(this.Thread);//Creat a new thread pool
             runPSIseekerThread runPSIseekerthread = null;
             for (Iterator<String> iterator = chrlist.iterator(); iterator.hasNext();) {
                 String chr = iterator.next();
-                if(positiveTreeTreatMap.get(chr)==null)continue;
-                if(positiveTreeControlMap.get(chr)==null)continue;
-                runPSIseekerthread = new runPSIseekerThread(chr, negativeResultMap.get(chr), positiveTreeTreatMap.get(chr), positiveTreeControlMap.get(chr));
+                if (positiveTreeTreatMap.get(chr) == null&&positiveTreeControlMap.get(chr) == null)   continue;
+                runPSIseekerthread = new runPSIseekerThread(chr, false,positiveTreeTreatMap.get(chr), positiveTreeControlMap.get(chr));
                 pool.submit(runPSIseekerthread);
             }
             for (Iterator<String> iterator = chrlist.iterator(); iterator.hasNext();) {
                 String chr = iterator.next();
-                if(negativeTreeTreatMap.get(chr)==null){
-                    continue;
-                }
-                if(negativeTreeControlMap.get(chr)==null){
-                    continue;
-                }
-                runPSIseekerthread = new runPSIseekerThread(chr, positiveResultMap.get(chr), negativeTreeTreatMap.get(chr), negativeTreeControlMap.get(chr));
+                if (negativeTreeTreatMap.get(chr) == null&&negativeTreeControlMap.get(chr) == null)  continue;
+                runPSIseekerthread = new runPSIseekerThread(chr, true,negativeTreeTreatMap.get(chr), negativeTreeControlMap.get(chr));
                 pool.submit(runPSIseekerthread);
             }
             pool.shutdown();
@@ -243,73 +206,110 @@ public final class PSIseekerInterval {
     class runPSIseekerThread implements Runnable {
 
         private String subchr;
-        private HashSet<PSIout> pomap;
         private IntervalTree intervalTreat;
         private IntervalTree intervalControl;
+        private boolean strand; // true for negative; true for positive
+        
 
-        public runPSIseekerThread(String subchr, HashSet<PSIout> pomap, IntervalTree intervalTreat, IntervalTree intervalControl) {
+        public runPSIseekerThread(String subchr, boolean strand, IntervalTree intervalTreat, IntervalTree intervalControl) {
             this.subchr = subchr;
-            this.pomap = pomap;
             this.intervalTreat = intervalTreat;
             this.intervalControl = intervalControl;
+            this.strand=strand;
         }
 
         @Override
         public void run() {
+            HashSet<PSIout> psioutSet=new HashSet<PSIout> ();
+//            System.out.println("ok");
 //            System.out.println("Start counting reads from " + ToolsforCMD.print_ansi_PURPLE(subchr));
-            for (Iterator poit = pomap.iterator(); poit.hasNext();) {
-                PSIout pso = (PSIout) poit.next();
-                Iterator<SAMRecord> tempit1 = intervalTreat.overlappers(pso.getPosition(), pso.getPosition());
-                
-                Iterator<SAMRecord> tempit2 = intervalControl.overlappers(pso.getPosition(), pso.getPosition());
-                CountReadsTreat(pso, tempit1);
-                CountReadsControl(pso, tempit2);
+            if (strand) {
+                for (Iterator poit = intervalTreat.iterator(); poit.hasNext();) {
+                    IntervalTree.Node nd = (IntervalTree.Node) poit.next();
+                    SAMRecord sr = (SAMRecord) nd.getValue();
+                    PSIout psi = new PSIout(subchr, sr.getAlignmentEnd(), strand);
+                    if (!psioutSet.add(psi)) continue;
+                    Iterator<IntervalTree.Node> tempit1 = intervalTreat.overlappers(psi.getPosition(), psi.getPosition());
+                    Iterator<IntervalTree.Node> tempit2 = intervalControl.overlappers(psi.getPosition(), psi.getPosition());
+                    CountReadsTreat(psi, tempit1);
+                    CountReadsControl(psi, tempit2);
+                    if (psi.getSupporCountInTreat() < filternumber || psi.getTotalCountControl() < filternumber) {
+                        psioutSet.remove(psi);
+                    }else{
+                        psi.setBase(new DNAsequenceProcess().getReverseComplimentary(sr.getReadString()).charAt(0));
+                        psi.setReadsString(sr.getReadString());
+                        psi.fishertest();
+                    }
+                }
+//                System.out.println("ADD N");
+                addnegativeResultMap(subchr,psioutSet);
+            } else {
+                for (Iterator poit = intervalTreat.iterator(); poit.hasNext();) {
+                    IntervalTree.Node nd = (IntervalTree.Node) poit.next();
+                    SAMRecord sr = (SAMRecord) nd.getValue();
+                    PSIout psi = new PSIout(subchr, sr.getAlignmentStart(), strand);
+                    if (!psioutSet.add(psi)) continue;
+                    Iterator<IntervalTree.Node> tempit1 = intervalTreat.overlappers(psi.getPosition(), psi.getPosition());
+                    Iterator<IntervalTree.Node> tempit2 = intervalControl.overlappers(psi.getPosition(), psi.getPosition());
+                    CountReadsTreat(psi, tempit1);
+                    CountReadsControl(psi, tempit2);
+                    if (psi.getSupporCountInTreat() < filternumber || psi.getTotalCountControl() < filternumber) {
+                        psioutSet.remove(psi);
+                    }else{
+                        psi.setBase(sr.getReadString().charAt(0));
+                        psi.setReadsString(sr.getReadString());
+                        psi.fishertest();
+                    }
+                }
+                addnpositiveResultMap(subchr,psioutSet);
             }
 
         }
 
         //Count reads from treated bamfile
-        public void CountReadsTreat(PSIout po, Iterator<SAMRecord> readsIt) {
-            for (Iterator<SAMRecord> iterator = readsIt; iterator.hasNext();) {
-                System.out.println("yes");
-                SAMRecord sr = iterator.next();
+        public void CountReadsTreat(PSIout po, Iterator<IntervalTree.Node> readsIt) {
+//            System.out.println("yes");
+            for (Iterator<IntervalTree.Node> iterator = readsIt; iterator.hasNext();) {
+                IntervalTree.Node nd = iterator.next();
+                SAMRecord sr = (SAMRecord) nd.getValue();
                 boolean strand = sr.getReadNegativeStrandFlag();
-                if (strand == po.isStrandB()) {
-                    if (strand) {
-                        if (this.iscoverNegative(po.getPosition(), sr)) {
-                            po.add1supporCountInTreat();
-                        }
-                        po.add1totalCountInTreat();
-
-                    } else {
-                        if (this.iscoverPositve(po.getPosition(), sr)) {
-                            po.add1supporCountInTreat();
-                        }
-                        po.add1totalCountInTreat();
-                    }
-
+                if (strand) {
+                    if (this.iscoverNegative(po.getPosition(), sr)) 
+                        po.add1supporCountInTreat();
+                } else {
+                    if (this.iscoverPositve(po.getPosition(), sr)) 
+                        po.add1supporCountInTreat();
                 }
-
+                 //exclude reads gap span position like "20M2000N20M "
+                if (isCoverAtMcigar(po.getPosition(), sr)) {
+                    po.add1totalCountInTreat();
+                }
             }
+            
+            
+            
         }
 
         //Count reads from Control bamfile
-        public void CountReadsControl(PSIout po, Iterator<SAMRecord> readsIt) {
-            for (Iterator<SAMRecord> iterator = readsIt; iterator.hasNext();) {
-                SAMRecord sr = iterator.next();
+        public void CountReadsControl(PSIout po, Iterator<IntervalTree.Node> readsIt) {
+//            System.out.println("NO");
+            for (Iterator<IntervalTree.Node> iterator = readsIt; iterator.hasNext();) {
+                IntervalTree.Node nd = iterator.next();
+                SAMRecord sr = (SAMRecord) nd.getValue();
                 boolean strand = sr.getReadNegativeStrandFlag();
-                if (strand == po.isStrandB()) {
                     if (strand) {
                         if (this.iscoverNegative(po.getPosition(), sr)) {
                             po.add1supporCountControl();
                         }
-                        po.add1totalCountControl();
                     } else {
                         if (this.iscoverPositve(po.getPosition(), sr)) {
                             po.add1supporCountControl();
                         }
-                        po.add1totalCountControl();
                     }
+                  //exclude reads gap span position like "20M2000N20M "
+                po.add1totalCountControl();
+                if (isCoverAtMcigar(po.getPosition(), sr)) {
+                    po.add1totalCountControl();
                 }
             }
         }
@@ -321,6 +321,7 @@ public final class PSIseekerInterval {
                 return false;
             }
         }
+
         public boolean iscoverPositve(int pos, SAMRecord sr) {
             if (sr.getAlignmentStart() == pos) {
                 return true;
@@ -328,73 +329,72 @@ public final class PSIseekerInterval {
                 return false;
             }
         }
+        public boolean isCoverAtMcigar(int pos, SAMRecord sr) {
+            Cigar cgar = sr.getCigar();
+            int currentlength = pos - sr.getAlignmentStart();
+            List<CigarElement> elist = cgar.getCigarElements();
+            boolean iscover = true;
+            for (Iterator it = elist.iterator(); it.hasNext();) {
+                CigarElement ce = (CigarElement) it.next();
+                int l = ce.getLength();
+                String o = ce.getOperator().name();
+                if (currentlength <= l && o.equals("M")) {
+                    break;
+                } else if (currentlength <= l && !o.equals("M")) {
+                    iscover = false;
+                    break;
+                }
+
+            }
+            return iscover;
+        }
     }
 
+    //for parallel
+    public synchronized void  addnegativeResultMap(String chrom,HashSet<PSIout> psioutSET ){
+        System.out.println("put\tN\t"+chrom+"\t"+psioutSET.size() );
+        this.negativeResultMap.put(chrom, psioutSET);
+    }
+    public synchronized void  addnpositiveResultMap(String chrom,HashSet<PSIout> psioutSET ){
+        System.out.println("put\tP\t"+chrom+"\t"+psioutSET.size() );
+        this.positiveResultMap.put(chrom, psioutSET);
+    }
+     
+    
+    
     public void print(String fileout) throws IOException {
         System.out.println("Writing out..");
         FileWriter fw = new FileWriter(fileout);
         ArrayList<PSIout> templist = new ArrayList<PSIout>();
         ArrayList<Double> plist = new ArrayList<Double>();
-        fw.append("chr\tposition\tbase\tstrand\tsupporCountInTreat\ttotalCountInTreat\tsupporCountControl\ttotalCountControl\tPvalue\tadjustP\n");
-
+        fw.append("chr\tposition\texbase\tbase\trepresentSeq\tstrand\tsupporCountInTreat\ttotalCountInTreat\tsupporCountControl\ttotalCountControl\tPvalue\tadjustP\tenrichmentScore\n");
         for (Iterator chrit = chrlist.iterator(); chrit.hasNext();) {
             String chr = (String) chrit.next();
-            if(negativeResultMap.get(chr)!=null){
-                HashSet<PSIout> negpomap = negativeResultMap.get(chr);
+            if (negativeResultMap.get(chr) != null) {
 
+                HashSet<PSIout> negpomap = negativeResultMap.get(chr);
+                System.out.println("Write\tN\t" + chr + "\t" + negpomap.size());
                 for (Iterator poit = negpomap.iterator(); poit.hasNext();) {
                     PSIout pso = (PSIout) poit.next();
-                    //remove reads less than 2 
-//                    if (pso.getSupporCountInTreat() < this.filternumber) {
-//                        continue;
-//                    }
-//                    //remove reads 
-//                    if (pso.getTotalCountControl() < this.filternumber) {
-//                        continue;
-//                    }
-//                    if (pso.getSupporCountInTreat() / pso.getTotalCountInTreat() < pso.getSupporCountControl() / pso.getTotalCountControl()) {
-//                        continue;
-//                    }
-                    pso.fishertest();
-                    plist.add(pso.getPvalue());
-                    templist.add(pso);
+                    fw.append(pso.toString() + "\n");
+                    fw.flush();
+//                    templist.add(pso);
                 }
             }
             if (positiveResultMap.get(chr) != null) {
                 HashSet<PSIout> pospomap = positiveResultMap.get(chr);
+                System.out.println("Write\tP\t"+chr+"\t"+pospomap.size() );
                 for (Iterator poit = pospomap.iterator(); poit.hasNext();) {
                     PSIout pso = (PSIout) poit.next();
-//                    if (pso.getSupporCountInTreat() < this.filternumber) {
-//                        continue;
-//                    }
-//                    //remove reads 
-//                    if (pso.getTotalCountControl() < this.filternumber) {
-//                        continue;
-//                    }
-//                    // remove site show lower propotion in treatment
-//                    if (pso.getSupporCountInTreat() / pso.getTotalCountInTreat() < pso.getSupporCountControl() / pso.getTotalCountControl()) {
-//                        continue;
-//                    }
-                    pso.fishertest();
-                    plist.add(pso.getPvalue());
-                    templist.add(pso);
+                    fw.append(pso.toString() + "\n");
+                    fw.flush();
                 }
             }
         }
         //FDR calculation && write out
-        ArrayList<Double> fdrlist = new FDR(plist).getFdrDoublelist();
-        for (int i = 0; i < templist.size(); i++) {
-            PSIout psi = templist.get(i);
+//        ArrayList<Double> fdrlist = new FDR(plist).getFdrDoublelist();
+      
 
-            if (psi.getStrand().endsWith("+")) {
-                psi.setBase(Indexgenomefile.getSequence(psi.getChr()).getBaseString().charAt(psi.getPosition() - 2));
-            } else {
-                psi.setBase(Indexgenomefile.getSequence(psi.getChr()).getBaseString().charAt(psi.getPosition()));
-            }
-            psi.setAdjustP(fdrlist.get(i));
-            fw.append(psi.toString() + "\t" + "\n");
-        }
-        fw.flush();
         fw.close();
     }
 
@@ -407,19 +407,16 @@ public final class PSIseekerInterval {
     }
 
     public static void main(String[] args) throws IOException {
-//        PSIseekerInterval ps = new PSIseekerInterval("E:\\迅雷下载\\SMULTQ02-3_chr4.bam", "E:\\迅雷下载\\SMULTQ02-4_chr4.bam", "E:\\迅雷下载\\dm6.fa");
-//        ps.process();
-//        ps.print("out.txt");
-    
-        IntervalTree potree = new IntervalTree();
-        potree.put(1, 2, 3);
-        potree.put(4, 5, 4);
-        potree.overlappers(4, 4);
-        for (Iterator it =potree.overlappers(4, 4); it.hasNext();) {
-            
-            System.out.println(it.next());
-        }
-        
+        PSIseekerInterval ps = new PSIseekerInterval("E:\\迅雷下载\\3.bam", "E:\\迅雷下载\\4.bam", "E:\\迅雷下载\\dm6.fa");
+        ps.print("out.txt");
 
+//        IntervalTree potree = new IntervalTree();
+//        potree.put(1, 2, 3);
+//        potree.put(4, 5, 4);
+//        potree.overlappers(4, 4);
+//        for (Iterator it =potree.overlappers(4, 4); it.hasNext();) {
+//            IntervalTree.Node test=(IntervalTree.Node) it.next();
+//            System.out.println(test.getValue());
+//        }
     }
 }
