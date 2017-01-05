@@ -317,7 +317,7 @@ public class PSIseekerParallel {
                 if (pso.getTotalCountControl() < this.filternumber) {
                     continue;
                 }
-                 pso.fishertest();
+//                 pso.fishertest();
                 double a=pso.getSupporCountControl();
                 double b=pso.getTotalCountControl();
                 if (pso.getSupporCountControl() == 0) {
@@ -350,7 +350,7 @@ public class PSIseekerParallel {
 //                    continue;
 //                }
                 // avoiding zero devider
-                pso.fishertest();
+//                pso.fishertest();
                 double a=pso.getSupporCountControl();
                 double b=pso.getTotalCountControl();
                 if (pso.getSupporCountControl() == 0) {

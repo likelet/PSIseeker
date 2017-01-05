@@ -39,13 +39,33 @@ public class CalculateClass {
     
     
     //get cigar reads with N covered posision N
-   
+    public static boolean isCoverAtMcigar(int pos, SAMRecord sr) {
+            Cigar cgar = sr.getCigar();
+            int currentlength = pos - sr.getAlignmentStart();
+            List<CigarElement> elist = cgar.getCigarElements();
+            boolean iscover = true;
+            for (Iterator it = elist.iterator(); it.hasNext();) {
+                CigarElement ce = (CigarElement) it.next();
+                int le = ce.getLength();
+                String o = ce.getOperator().name();
+                if (currentlength <= le && o.equals("M")) {
+                    break;
+                } else if (currentlength <= le && o.equals("N")) {
+                    iscover = false;
+                    break;
+                } else {
+                    currentlength = currentlength - le;
+                }
+            }
+//            System.out.println("finish");
+            return iscover;
+        }
    
     
     public static void main(String[] args) {
         SAMRecord sr =new SAMRecord(new SAMFileHeader());
         sr.setAlignmentStart(100);
         sr.setCigarString("23M100N20M");
-//        System.out.println(CalculateClass.getMstart(223, sr));
+        System.out.println(CalculateClass.isCoverAtMcigar(224, sr));
     }
 }

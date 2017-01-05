@@ -270,7 +270,7 @@ public class PSIseeker {
                 if(pso.getSupporCountInTreat()/pso.getTotalCountInTreat()< pso.getSupporCountControl()/pso.getTotalCountControl()){
                     continue;
                 }
-                pso.fishertest();
+//                pso.fishertest();
                 plist.add(pso.getPvalue());
                 templist.add(pso);
 
@@ -289,7 +289,7 @@ public class PSIseeker {
                 if(pso.getSupporCountInTreat()/pso.getTotalCountInTreat()< pso.getSupporCountControl()/pso.getTotalCountControl()){
                     continue;
                 }
-                pso.fishertest();
+//                pso.fishertest();
                 plist.add(pso.getPvalue());
                 templist.add(pso);
 

@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import pisseeker.pub.DNAsequenceProcess;
+import pisseeker.pub.FisherExactTest;
 
 /**
  *
@@ -43,7 +44,7 @@ public final class PSIseekerInterval {
 
     private final SamReader srt;
     private final SamReader src;
-    public int Thread = 3;
+    public int Thread = 2;
     public String tbam;
     public String cbam;
     public IndexedFastaSequenceFile Indexgenomefile;
@@ -223,43 +224,51 @@ public final class PSIseekerInterval {
             HashSet<PSIout> psioutSet=new HashSet<PSIout> ();
 //            System.out.println("ok");
 //            System.out.println("Start counting reads from " + ToolsforCMD.print_ansi_PURPLE(subchr));
+ 
             if (strand) {
                 for (Iterator poit = intervalTreat.iterator(); poit.hasNext();) {
                     IntervalTree.Node nd = (IntervalTree.Node) poit.next();
                     SAMRecord sr = (SAMRecord) nd.getValue();
+                    
                     PSIout psi = new PSIout(subchr, sr.getAlignmentEnd(), strand);
+                    
                     if (!psioutSet.add(psi)) continue;
                     Iterator<IntervalTree.Node> tempit1 = intervalTreat.overlappers(psi.getPosition(), psi.getPosition());
                     Iterator<IntervalTree.Node> tempit2 = intervalControl.overlappers(psi.getPosition(), psi.getPosition());
-                    CountReadsTreat(psi, tempit1);
-                    CountReadsControl(psi, tempit2);
+                    CountReadsTreat(psi,strand, tempit1);
+                    CountReadsControl(psi,strand, tempit2);
+                    
                     if (psi.getSupporCountInTreat() < filternumber || psi.getTotalCountControl() < filternumber) {
                         psioutSet.remove(psi);
-                    }else{
-                        psi.setBase(new DNAsequenceProcess().getReverseComplimentary(sr.getReadString()).charAt(0));
-                        psi.setReadsString(sr.getReadString());
-                        psi.fishertest();
-                    }
+                    }else {
+                            psi.setBase(sr.getReadString().charAt(0));
+                            psi.setReadsString(sr.getReadString());
+//                            fishertest(psi);
+                        }
+                    
                 }
-//                System.out.println("ADD N");
-                addnegativeResultMap(subchr,psioutSet);
-            } else {
+               addnegativeResultMap(subchr, psioutSet);
+            } else if (!strand){
+//                System.out.println(intervalTreat.size());
                 for (Iterator poit = intervalTreat.iterator(); poit.hasNext();) {
                     IntervalTree.Node nd = (IntervalTree.Node) poit.next();
                     SAMRecord sr = (SAMRecord) nd.getValue();
                     PSIout psi = new PSIout(subchr, sr.getAlignmentStart(), strand);
-                    if (!psioutSet.add(psi)) continue;
-                    Iterator<IntervalTree.Node> tempit1 = intervalTreat.overlappers(psi.getPosition(), psi.getPosition());
-                    Iterator<IntervalTree.Node> tempit2 = intervalControl.overlappers(psi.getPosition(), psi.getPosition());
-                    CountReadsTreat(psi, tempit1);
-                    CountReadsControl(psi, tempit2);
-                    if (psi.getSupporCountInTreat() < filternumber || psi.getTotalCountControl() < filternumber) {
-                        psioutSet.remove(psi);
-                    }else{
-                        psi.setBase(sr.getReadString().charAt(0));
-                        psi.setReadsString(sr.getReadString());
-                        psi.fishertest();
-                    }
+                    if (!psioutSet.add(psi)) continue; 
+//                    System.out.println(intervalTreat.size());
+                        Iterator<IntervalTree.Node> tempit1 = intervalTreat.overlappers(psi.getPosition(), psi.getPosition());
+                        Iterator<IntervalTree.Node> tempit2 = intervalControl.overlappers(psi.getPosition(), psi.getPosition());
+                        CountReadsTreat(psi, strand, tempit1);
+                        CountReadsControl(psi, strand, tempit2);
+
+                        if (psi.getSupporCountInTreat() < filternumber || psi.getTotalCountControl() < filternumber) {
+                            psioutSet.remove(psi);
+                        } else {
+                            psi.setBase(sr.getReadString().charAt(0));
+                            psi.setReadsString(sr.getReadString());
+//                           fishertest(psi);
+                        }
+                   
                 }
                 addnpositiveResultMap(subchr,psioutSet);
             }
@@ -267,12 +276,14 @@ public final class PSIseekerInterval {
         }
 
         //Count reads from treated bamfile
-        public void CountReadsTreat(PSIout po, Iterator<IntervalTree.Node> readsIt) {
-//            System.out.println("yes");
+        public void CountReadsTreat(PSIout po, boolean strand, Iterator<IntervalTree.Node> readsIt) {
+          
             for (Iterator<IntervalTree.Node> iterator = readsIt; iterator.hasNext();) {
                 IntervalTree.Node nd = iterator.next();
                 SAMRecord sr = (SAMRecord) nd.getValue();
-                boolean strand = sr.getReadNegativeStrandFlag();
+//                if(po.getPosition()==414041){
+//                        System.out.println(sr.getAlignmentStart()+"\t"+sr.getAlignmentEnd()+"\t"+sr.getCigarString()+"\t"+isCoverAtMcigar(po.getPosition(), sr));
+//                    }
                 if (strand) {
                     if (this.iscoverNegative(po.getPosition(), sr)) 
                         po.add1supporCountInTreat();
@@ -281,9 +292,11 @@ public final class PSIseekerInterval {
                         po.add1supporCountInTreat();
                 }
                  //exclude reads gap span position like "20M2000N20M "
-                if (isCoverAtMcigar(po.getPosition(), sr)) {
+                    if (isCoverAtMcigar(po.getPosition(), sr)){ 
                     po.add1totalCountInTreat();
-                }
+                    }else{
+                        System.out.println(po.getPosition()+"\t"+sr.getCigarString());
+                    }
             }
             
             
@@ -291,12 +304,10 @@ public final class PSIseekerInterval {
         }
 
         //Count reads from Control bamfile
-        public void CountReadsControl(PSIout po, Iterator<IntervalTree.Node> readsIt) {
-//            System.out.println("NO");
+        public void CountReadsControl(PSIout po, boolean strand,Iterator<IntervalTree.Node> readsIt) {
             for (Iterator<IntervalTree.Node> iterator = readsIt; iterator.hasNext();) {
                 IntervalTree.Node nd = iterator.next();
                 SAMRecord sr = (SAMRecord) nd.getValue();
-                boolean strand = sr.getReadNegativeStrandFlag();
                     if (strand) {
                         if (this.iscoverNegative(po.getPosition(), sr)) {
                             po.add1supporCountControl();
@@ -307,7 +318,7 @@ public final class PSIseekerInterval {
                         }
                     }
                   //exclude reads gap span position like "20M2000N20M "
-                po.add1totalCountControl();
+//                po.add1totalCountControl();
                 if (isCoverAtMcigar(po.getPosition(), sr)) {
                     po.add1totalCountControl();
                 }
@@ -321,7 +332,6 @@ public final class PSIseekerInterval {
                 return false;
             }
         }
-
         public boolean iscoverPositve(int pos, SAMRecord sr) {
             if (sr.getAlignmentStart() == pos) {
                 return true;
@@ -336,17 +346,34 @@ public final class PSIseekerInterval {
             boolean iscover = true;
             for (Iterator it = elist.iterator(); it.hasNext();) {
                 CigarElement ce = (CigarElement) it.next();
-                int l = ce.getLength();
+                int le = ce.getLength();
                 String o = ce.getOperator().name();
-                if (currentlength <= l && o.equals("M")) {
+                if (currentlength <= le && o.equals("M")) {
                     break;
-                } else if (currentlength <= l && !o.equals("M")) {
+                } else if (currentlength <= le && o.equals("N")) {
                     iscover = false;
                     break;
+                } else {
+                    currentlength = currentlength - le;
                 }
-
             }
+//            System.out.println("finish");
             return iscover;
+        }
+        
+        
+        // why not work？
+        public void fishertest(PSIout pis) {
+            FisherExactTest test = new FisherExactTest();
+            int a = pis.getSupporCountControl();
+            int b = pis.getTotalCountControl();
+            if (a == 0) {
+                a = 1;
+            }
+            if (b == 0) {
+                b = 1;
+            }
+            pis.setPvalue(test.getTwoTailP(pis.getSupporCountInTreat(), pis.getTotalCountInTreat() - pis.getSupporCountInTreat(), a, b - a));
         }
     }
 
@@ -407,7 +434,8 @@ public final class PSIseekerInterval {
     }
 
     public static void main(String[] args) throws IOException {
-        PSIseekerInterval ps = new PSIseekerInterval("E:\\迅雷下载\\3.bam", "E:\\迅雷下载\\4.bam", "E:\\迅雷下载\\dm6.fa");
+//        PSIseekerInterval ps = new PSIseekerInterval("E:\\迅雷下载\\3.bam", "E:\\迅雷下载\\4.bam", "E:\\迅雷下载\\dm6.fa");
+        PSIseekerInterval ps = new PSIseekerInterval("E:\\迅雷下载\\SMULTQ02-3_chr4.bam", "E:\\迅雷下载\\SMULTQ02-4_chr4.bam", "E:\\迅雷下载\\dm6.fa");
         ps.print("out.txt");
 
 //        IntervalTree potree = new IntervalTree();
