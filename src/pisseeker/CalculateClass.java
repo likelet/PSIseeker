@@ -10,10 +10,18 @@ import htsjdk.samtools.Cigar;
 import htsjdk.samtools.CigarElement;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMRecord;
+import htsjdk.samtools.util.IntervalTree;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.apache.commons.math3.distribution.PoissonDistribution;
 
 /**
  *
@@ -23,49 +31,109 @@ import java.util.List;
  * @author Qi Zhao
  */
 public class CalculateClass {
-    private double lamda;// lamda parameter for poisson distribution
-    private ArrayList<PSIout> psilist=new ArrayList<PSIout>();
 
-    public CalculateClass(HashSet<PSIout> psiset) {
-        double libtreat1=0;
-        double libtreat2=0;
-        for (Iterator it = psiset.iterator(); it.hasNext();) {
-            PSIout psi = (PSIout) it.next();
-//            libtreat1+=psi.get
-            psilist.add(psi);
+    private HashMap<String, HashSet<PSIout>> positiveResultMap;// result in positve strand 
+    private HashMap<String, HashSet<PSIout>> negativeResultMap;// result in negative strand;
+
+    private HashMap<String, IntervalTree> positiveBackGroundMap;// result in positve strand 
+    private HashMap<String, IntervalTree> negativeBackGroundMap;// result in negative strand;
+
+    private HashMap<String, Double> positiveGloableLamda;
+    private HashMap<String, Double> negativeGloableLamda;
+    private int thread;
+    private HashSet<String> chrlist;
+
+    public CalculateClass(HashMap<String, HashSet<PSIout>> positiveResultMap, HashMap<String, HashSet<PSIout>> negativeResultMap, HashMap<String, IntervalTree> positiveBackGroundMap, HashMap<String, IntervalTree> negativeBackGroundMap, HashMap<String, Double> positiveGloableLamda, HashMap<String, Double> negativeGloableLamda, int thread, HashSet<String> chrlist) {
+        this.positiveResultMap = positiveResultMap;
+        this.negativeResultMap = negativeResultMap;
+        this.positiveBackGroundMap = positiveBackGroundMap;
+        this.negativeBackGroundMap = negativeBackGroundMap;
+        this.positiveGloableLamda = positiveGloableLamda;
+        this.negativeGloableLamda = negativeGloableLamda;
+        this.thread = thread;
+        this.chrlist = chrlist;
+        this.process();
+    }
+
+    
+    
+    public void process(){
+         try {
+            ExecutorService pool = Executors.newFixedThreadPool(this.thread);
+            PSIseeker.runPSIseekerThread runPSIseekerthread = null;
+            for (Iterator iterator =chrlist .iterator(); iterator.hasNext();) {
+                String chr = (String) iterator.next();
+                if ((this.positiveResultMap.get(chr) == null) && (this.positiveBackGroundMap.get(chr) == null)) {
+                    continue;
+                }
+                getPoissonPthread getP= new getPoissonPthread(chr, this.positiveResultMap.get(chr),  this.positiveBackGroundMap.get(chr),this.positiveGloableLamda.get(chr));
+                pool.submit(runPSIseekerthread);
+            }
+            for (Iterator iterator = this.chrlist.iterator(); iterator.hasNext();) {
+                String chr = (String) iterator.next();
+                if ((this.negativeResultMap.get(chr) == null) && (this.negativeBackGroundMap.get(chr) == null)) {
+                    continue;
+                }
+               getPoissonPthread getP= new getPoissonPthread(chr, this.negativeResultMap.get(chr),  this.negativeBackGroundMap.get(chr),this.negativeGloableLamda.get(chr));
+               pool.submit(runPSIseekerthread);
+            }
+            pool.shutdown();
+            pool.awaitTermination(9223372036854775807L, TimeUnit.DAYS);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(PSIseeker.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+
+    
+    
+    class getPoissonPthread implements Runnable {
+        private String chr;
+        private HashSet<PSIout> subResultMap;
+        private IntervalTree subIntervalMap;
+        private double globalLam;
+
+        public getPoissonPthread(String chr, HashSet<PSIout> subResultMap, IntervalTree subIntervalMap, double globalLam) {
+            this.chr = chr;
+            this.subResultMap = subResultMap;
+            this.subIntervalMap = subIntervalMap;
+            this.globalLam = globalLam;
         }
         
+        
+
+        public void run() {
+            for (Iterator it = subResultMap.iterator(); it.hasNext();) {
+                PSIout psi = (PSIout) it.next();
+                double lamd5k=getAverageLamda(subIntervalMap.overlappers(psi.getPosition()-2500, psi.getPosition()+2500));
+                double lamd1k=getAverageLamda(subIntervalMap.overlappers(psi.getPosition()-500, psi.getPosition()+500));
+                double lamda=Math.max(lamd1k, lamd5k);
+                lamda=Math.max(lamda, globalLam);
+                PoissonDistribution pdis=new PoissonDistribution(lamda);
+                double currentRatio=(double)psi.getSupporCountInTreat()/(double)psi.getTotalCountInTreat();
+                psi.setPoissonP(1-pdis.cumulativeProbability(currentRatio));
+                
+            }
+        }
+        
+        //Get average enrichment ratio of a background interval 
+        public double getAverageLamda(Iterator iterm){
+            double tamplam=0;
+            double count=0;
+            for (Iterator it = iterm; it.hasNext();) {
+                IntervalTree.Node nd = (IntervalTree.Node) it.next();
+                PSIout ps = (PSIout) nd.getValue();
+                count++;
+                tamplam+=ps.getBackRatio();
+            }
+            return tamplam/count;
+            
+        }
+
     }
-    
     
     //get cigar reads with N covered posision N
-    public static boolean isCoverAtMcigar(int pos, SAMRecord sr) {
-            Cigar cgar = sr.getCigar();
-            int currentlength = pos - sr.getAlignmentStart();
-            List<CigarElement> elist = cgar.getCigarElements();
-            boolean iscover = true;
-            for (Iterator it = elist.iterator(); it.hasNext();) {
-                CigarElement ce = (CigarElement) it.next();
-                int le = ce.getLength();
-                String o = ce.getOperator().name();
-                if (currentlength <= le && o.equals("M")) {
-                    break;
-                } else if (currentlength <= le && o.equals("N")) {
-                    iscover = false;
-                    break;
-                } else {
-                    currentlength = currentlength - le;
-                }
-            }
-//            System.out.println("finish");
-            return iscover;
-        }
    
     
-    public static void main(String[] args) {
-        SAMRecord sr =new SAMRecord(new SAMFileHeader());
-        sr.setAlignmentStart(100);
-        sr.setCigarString("23M100N20M");
-        System.out.println(CalculateClass.isCoverAtMcigar(224, sr));
-    }
+ 
 }

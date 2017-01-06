@@ -13,32 +13,43 @@ import java.util.HashMap;
  * @author zhaoqi
  */
 public class DNAsequenceProcess {
-    private HashMap<String,String> complimentaryMap=new HashMap<String,String> ();
+//    private HashMap<String,String> complimentaryMap=new HashMap<String,String> ();
+//
+//    public DNAsequenceProcess() {
+//        complimentaryMap.put("A", "T");
+//        complimentaryMap.put("T", "A");
+//        complimentaryMap.put("C", "G");
+//        complimentaryMap.put("G", "C");  
+//        complimentaryMap.put("N", "N"); 
+//        complimentaryMap.put("a", "t");
+//        complimentaryMap.put("t", "a");
+//        complimentaryMap.put("c", "g");
+//        complimentaryMap.put("g", "c");  
+//    }
+//    
+ //返回一段序列的反向互补序列   
 
-    public DNAsequenceProcess() {
+    public static String getReverseComplimentary(String str) {
+        HashMap<String, String> complimentaryMap = new HashMap<String, String>();
         complimentaryMap.put("A", "T");
         complimentaryMap.put("T", "A");
         complimentaryMap.put("C", "G");
-        complimentaryMap.put("G", "C");  
-        complimentaryMap.put("N", "N"); 
+        complimentaryMap.put("G", "C");
+        complimentaryMap.put("N", "N");
         complimentaryMap.put("a", "t");
         complimentaryMap.put("t", "a");
         complimentaryMap.put("c", "g");
-        complimentaryMap.put("g", "c");  
+        complimentaryMap.put("g", "c");
+        String tempstr = "";
+        String temps = "";
+
+        for (int i = str.length() - 1; i >= 0; i--) {
+            temps = String.valueOf(str.charAt(i));
+            temps = complimentaryMap.get(temps);
+            tempstr += temps;
+        }
+        return tempstr;
     }
-    
- //返回一段序列的反向互补序列   
-    public  String getReverseComplimentary(String str){
-    String tempstr="";
-    String temps="";
-     
-    for (int i = str.length()-1; i >=0; i--) {
-        temps=String.valueOf(str.charAt(i));
-        temps=complimentaryMap.get(temps);
-        tempstr+=temps;
-    }
-    return tempstr;
-}
     public static char getChargefBase(char c){
          HashMap<Character,Character> temomap=new HashMap<Character,Character> ();
          

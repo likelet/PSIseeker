@@ -1,382 +1,260 @@
 /*
- * This class encodes the basic output format of PSI seeker with following columns 
- chr position base supporCountInTreat totalCountInTreat supporCountControl   totalCountControl Pvalue adjustpvalue
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
  */
-
 package pisseeker;
-
-import pisseeker.pub.FisherExactTest;
-
-
 
 /**
  *
- * @author zhaoqi
+ * @author Administrator
+ * @since 2017-1-6
+ * @coding time 11:24:56
+ * @author Qi Zhao
  */
 public class PSIout {
-    
+
     private String chr;
-    
-    private int position; // 1 based  position
-    private String strand;// strand information
-    private boolean strandB;//boolean format for strand
-    private char exbase=' ';//base at previous position
-    private char base= ' '; // nuclic acid at candited position
-    private String readsString ="";
-    private int supporCountInTreat=0;
-    
-    private int totalCountInTreat=0;
-    
-    private int supporCountControl=0;
-    
+    private int position;
+    private String strand;
+    private boolean strandB;
+    private char exbase = ' ';
+    private char base = ' ';
+    private String readsString = "";
+    private int supporCountInTreat = 0;
+    private int totalCountInTreat = 0;
+    private int supporCountControl = 0;
     private int totalCountControl = 0;
-    
-    private double Pvalue=1;//fisher test Pvalue
-    
-    private double adjustP = 1;//ajust Pvalue
-    
-    
-    
-    
+    private double FisherPvalue = 1.0D;
+    private double fihserAdjustP = 1.0D;
+    private double enrichmentScore = 1.0D;
+    private double swapFDR = 1.0D;
+    private String firstCigar;
+    private double backRatio=0;
+    private double lamda[] =new double[3]; //local lamda list with each conrespponding lamdaBG,lamda 1k, lamda 5k
+    private double PoissonP=1;
+
+    /**
+     * Get the value of PoissonP
+     *
+     * @return the value of PoissonP
+     */
+    public double getPoissonP() {
+        return PoissonP;
+    }
+
+    /**
+     * Set the value of PoissonP
+     *
+     * @param PoissonP new value of PoissonP
+     */
+    public void setPoissonP(double PoissonP) {
+        this.PoissonP = PoissonP;
+    }
+
 
     public PSIout(String chr, int position) {
         this.chr = chr;
         this.position = position;
-        
     }
 
     public PSIout(String chr, int position, boolean strand) {
         this.chr = chr;
         this.position = position;
-        if(strand){
+        if (strand) {
             this.strand = "-";
-        }else{
+        } else {
             this.strand = "+";
         }
-        this.strandB=strand;
-        
+        this.strandB = strand;
     }
-    
-    
-   
 
     public boolean isStrandB() {
-        return strandB;
+        return this.strandB;
     }
 
     public void setStrandB(boolean strandB) {
         this.strandB = strandB;
     }
 
-
-    
-    /**
-     * Get the value of adjustP
-     *
-     * @return the value of adjustP
-     */
-    public double getAdjustP() {
-        return adjustP;
+    public double getFihserAdjustP() {
+        return this.fihserAdjustP;
     }
 
-    /**
-     * Set the value of adjustP
-     *
-     * @param adjustP new value of adjustP
-     */
-    public void setAdjustP(double adjustP) {
-        this.adjustP = adjustP;
+    public void setFihserAdjustP(double fihserAdjustP) {
+        this.fihserAdjustP = fihserAdjustP;
     }
 
-
-    /**
-     * Get the value of Pvalue
-     *
-     * @return the value of Pvalue
-     */
-    public double getPvalue() {
-        return Pvalue;
+    public double getFisherPvalue() {
+        return this.FisherPvalue;
     }
 
-    /**
-     * Set the value of Pvalue
-     *
-     * @param Pvalue new value of Pvalue
-     */
-    public void setPvalue(double Pvalue) {
-        this.Pvalue = Pvalue;
+    public void setFisherPvalue(double FisherPvalue) {
+        this.FisherPvalue = FisherPvalue;
     }
 
-
-    /**
-     * Get the value of totalCountControl
-     *
-     * @return the value of totalCountControl
-     */
     public int getTotalCountControl() {
-        return totalCountControl;
+        return this.totalCountControl;
     }
 
-    /**
-     * Set the value of totalCountControl
-     *
-     * @param totalCountControl new value of totalCountControl
-     */
     public void setTotalCountControl(int totalCountControl) {
         this.totalCountControl = totalCountControl;
     }
 
-    
-
-    /**
-     * Get the value of supporCountControl
-     *
-     * @return the value of supporCountControl
-     */
     public int getSupporCountControl() {
-        return supporCountControl;
+        return this.supporCountControl;
     }
 
-    /**
-     * Set the value of supporCountControl
-     *
-     * @param supporCountControl new value of supporCountControl
-     */
     public void setSupporCountControl(int supporCountControl) {
         this.supporCountControl = supporCountControl;
     }
 
-
-    /**
-     * Get the value of totalCountInTreat
-     *
-     * @return the value of totalCountInTreat
-     */
     public int getTotalCountInTreat() {
-        return totalCountInTreat;
+        return this.totalCountInTreat;
     }
 
-    /**
-     * Set the value of totalCountInTreat
-     *
-     * @param totalCountInTreat new value of totalCountInTreat
-     */
     public void setTotalCountInTreat(int totalCountInTreat) {
         this.totalCountInTreat = totalCountInTreat;
     }
 
-
-    /**
-     * Get the value of supporCountInTreat
-     *
-     * @return the value of supporCountInTreat
-     */
     public int getSupporCountInTreat() {
-        return supporCountInTreat;
+        return this.supporCountInTreat;
     }
 
-    /**
-     * Set the value of supporCountInTreat
-     *
-     * @param supporCountInTreat new value of supporCountInTreat
-     */
     public void setSupporCountInTreat(int supporCountInTreat) {
         this.supporCountInTreat = supporCountInTreat;
     }
 
-
-    /**
-     * Get the value of base
-     *
-     * @return the value of base
-     */
     public char getBase() {
-        return base;
+        return this.base;
     }
 
-    /**
-     * Set the value of base
-     *
-     * @param base new value of base
-     */
     public void setBase(char base) {
         this.base = base;
     }
 
     public String getReadsString() {
-        return readsString;
+        return this.readsString;
     }
 
     public void setReadsString(String readsString) {
         this.readsString = readsString;
     }
 
-
-    /**
-     * Get the value of position
-     *
-     * @return the value of position
-     */
     public int getPosition() {
-        return position;
+        return this.position;
     }
 
-    /**
-     * Set the value of position
-     *
-     * @param position new value of position
-     */
     public void setPosition(int position) {
         this.position = position;
     }
 
-    /**
-     * Get the value of chr
-     *
-     * @return the value of chr
-     */
     public String getChr() {
-        return chr;
+        return this.chr;
     }
 
-    /**
-     * Set the value of chr
-     *
-     * @param chr new value of chr
-     */
     public void setChr(String chr) {
         this.chr = chr;
     }
 
     public char getExbase() {
-        return exbase;
+        return this.exbase;
     }
 
     public void setExbase(char exbase) {
         this.exbase = exbase;
     }
 
-    
-    
-    
-    
-    public void add1supporCountInTreat(){
-        this.supporCountInTreat++;
+    public void add1supporCountInTreat() {
+        this.supporCountInTreat += 1;
     }
-    
-    public void add1totalCountInTreat(){
-        this.totalCountInTreat++;
+
+    public void add1totalCountInTreat() {
+        this.totalCountInTreat += 1;
     }
-    public void add1supporCountControl(){
-        this.supporCountControl++;
+
+    public void add1supporCountControl() {
+        this.supporCountControl += 1;
     }
-    public void add1totalCountControl(){
-        this.totalCountControl++;
+
+    public void add1totalCountControl() {
+        this.totalCountControl += 1;
     }
 
     public String getStrand() {
-        return strand;
+        return this.strand;
     }
 
     public void setStrand(String strand) {
         this.strand = strand;
     }
-    
-    
-    @Override
 
     public int hashCode() {
-
-//        System.out.println("------hashCode----");
-
         return 1;
-
     }
 
-    @Override
-
     public boolean equals(Object obj) {
-
-//        System.out.println("------equals----");
-
-        if (obj instanceof PSIout) {
-
+        if ((obj instanceof PSIout)) {
             PSIout po = (PSIout) obj;
 
-            if (this.position==(po.getPosition())) {
-
+            if (this.position == po.getPosition()) {
                 return true;
-
             }
 
         }
 
         return false;
-
     }
-    
-    //TEST attributive
-    private double enrichmentScore=1;
 
     public double getEnrichmentScore() {
-        return enrichmentScore;
+        return this.enrichmentScore;
     }
 
     public void setEnrichmentScore(double enrichmentScore) {
         this.enrichmentScore = enrichmentScore;
     }
-    
-        private double poissonP;
 
-    /**
-     * Get the value of poissonP
-     *
-     * @return the value of poissonP
-     */
-    public double getPoissonP() {
-        return poissonP;
-    }
+   
 
-    /**
-     * Set the value of poissonP
-     *
-     * @param poissonP new value of poissonP
-     */
-    public void setPoissonP(double poissonP) {
-        this.poissonP = poissonP;
-    }
-
-    private double swapFDR=1;
-
-    /**
-     * Get the value of swapFDR
-     *
-     * @return the value of swapFDR
-     */
     public double getSwapFDR() {
-        return swapFDR;
+        return this.swapFDR;
     }
 
-    /**
-     * Set the value of swapFDR
-     *
-     * @param swapFDR new value of swapFDR
-     */
     public void setSwapFDR(double swapFDR) {
         this.swapFDR = swapFDR;
     }
 
-    
-    @Override
-    public String toString() {
-        return chr + "\t" + position + "\t" +exbase+"\t"+ base + "\t"+readsString+"\t"+strand+"\t" + supporCountInTreat + "\t" + totalCountInTreat +"\t" + supporCountControl +"\t" + totalCountControl + "\t" + Pvalue + "\t" + adjustP ;
+    public String getFirstCigar() {
+        return this.firstCigar;
     }
-    
-    public String toString2() {
-        return chr + "\t" + position + "\t" +exbase+"\t"+ base + "\t"+readsString+"\t"+strand+"\t" + supporCountInTreat + "\t" + totalCountInTreat +"\t" + supporCountControl +"\t" + totalCountControl + "\t" + Pvalue + "\t" + adjustP+"\t"+this.enrichmentScore ;
+
+    public void setFirstCigar(String firstCigar) {
+        this.firstCigar = firstCigar;
+    }
+
+    public void calBackRatio(){
+        this.backRatio=(double)supporCountControl/(double)totalCountControl;
+    }
+
+    public double getBackRatio() {
+        return backRatio;
     }
     
 
+    public double[] getLamda() {
+        return lamda;
+    }
+
+    public void setLamda(double[] lamda) {
+        this.lamda = lamda;
+    }
     
     
+    public String toString() {
+        return this.chr + "\t" + this.position + "\t" + this.exbase + "\t" + this.base + "\t" + this.readsString + "\t" + this.strand + "\t" + this.supporCountInTreat + "\t" + this.totalCountInTreat + "\t" + this.supporCountControl + "\t" + this.totalCountControl + "\t" + this.FisherPvalue + "\t" + this.fihserAdjustP;
+    }
+
+    public String toString2() {
+        return this.chr + "\t" + this.position + "\t" + this.exbase + "\t" + this.base + "\t" + this.firstCigar + "\t" + this.readsString + "\t" + this.strand + "\t" + this.supporCountInTreat + "\t" + this.totalCountInTreat + "\t" + this.supporCountControl + "\t" + this.totalCountControl + "\t" + this.FisherPvalue + "\t" + this.fihserAdjustP + "\t" + this.enrichmentScore;
+    }
 }
