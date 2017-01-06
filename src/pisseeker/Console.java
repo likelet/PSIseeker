@@ -51,7 +51,7 @@ public class Console {
                     + ToolsforCMD.print_ansi_YELLOW("User defined minimum enrichment that ratio in treatment agains ratio in input,DEFAULT 8\r\n"));
 
         }  else if (args[0].endsWith("-run")) {
-            PSIseekerInterval psiseeker = new PSIseekerInterval(args[1], args[2],args[3]);
+            PSIseeker psiseeker = new PSIseeker(args[1], args[2],args[3]);
             if (FunctionClass.getArgsParameter(args, "-cov") != null) {
                 psiseeker.filternumber = Integer.parseInt(FunctionClass.getArgsParameter(args, "-cov"));
                 System.out.println(ToolsforCMD.print_ansi_GREEN(FunctionClass.getArgsParameter(args, "-cov")) + "  minimun reads threshold is applied for analysis");

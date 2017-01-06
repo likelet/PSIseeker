@@ -60,14 +60,14 @@ public class CalculateClass {
     public void process(){
          try {
             ExecutorService pool = Executors.newFixedThreadPool(this.thread);
-            PSIseeker.runPSIseekerThread runPSIseekerthread = null;
+//            PSIseeker.getPoissonPthread runPSIseekerthread = null;
             for (Iterator iterator =chrlist .iterator(); iterator.hasNext();) {
                 String chr = (String) iterator.next();
                 if ((this.positiveResultMap.get(chr) == null) && (this.positiveBackGroundMap.get(chr) == null)) {
                     continue;
                 }
                 getPoissonPthread getP= new getPoissonPthread(chr, this.positiveResultMap.get(chr),  this.positiveBackGroundMap.get(chr),this.positiveGloableLamda.get(chr));
-                pool.submit(runPSIseekerthread);
+                pool.submit(getP);
             }
             for (Iterator iterator = this.chrlist.iterator(); iterator.hasNext();) {
                 String chr = (String) iterator.next();
@@ -75,7 +75,7 @@ public class CalculateClass {
                     continue;
                 }
                getPoissonPthread getP= new getPoissonPthread(chr, this.negativeResultMap.get(chr),  this.negativeBackGroundMap.get(chr),this.negativeGloableLamda.get(chr));
-               pool.submit(runPSIseekerthread);
+               pool.submit(getP);
             }
             pool.shutdown();
             pool.awaitTermination(9223372036854775807L, TimeUnit.DAYS);
@@ -109,9 +109,9 @@ public class CalculateClass {
                 double lamd1k=getAverageLamda(subIntervalMap.overlappers(psi.getPosition()-500, psi.getPosition()+500));
                 double lamda=Math.max(lamd1k, lamd5k);
                 lamda=Math.max(lamda, globalLam);
-                PoissonDistribution pdis=new PoissonDistribution(lamda);
+                PoissonDistribution pdis=new PoissonDistribution(lamda*50);
                 double currentRatio=(double)psi.getSupporCountInTreat()/(double)psi.getTotalCountInTreat();
-                psi.setPoissonP(1-pdis.cumulativeProbability(currentRatio));
+                psi.setPoissonP(1-pdis.cumulativeProbability((int)(currentRatio*50)));
                 
             }
         }

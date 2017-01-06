@@ -255,6 +255,6 @@ public class PSIout {
     }
 
     public String toString2() {
-        return this.chr + "\t" + this.position + "\t" + this.exbase + "\t" + this.base + "\t" + this.firstCigar + "\t" + this.readsString + "\t" + this.strand + "\t" + this.supporCountInTreat + "\t" + this.totalCountInTreat + "\t" + this.supporCountControl + "\t" + this.totalCountControl + "\t" + this.FisherPvalue + "\t" + this.fihserAdjustP + "\t" + this.enrichmentScore;
+        return this.chr + "\t" + this.position + "\t" + this.exbase + "\t" + this.base + "\t" + this.firstCigar + "\t" + this.readsString + "\t" + this.strand + "\t" + this.supporCountInTreat + "\t" + this.totalCountInTreat + "\t" + this.supporCountControl + "\t" + this.totalCountControl + "\t" + this.FisherPvalue + "\t" + this.fihserAdjustP + "\t" + this.enrichmentScore+"\t"+this.PoissonP;
     }
 }

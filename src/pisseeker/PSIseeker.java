@@ -189,6 +189,13 @@ public final class PSIseeker {
         } catch (InterruptedException ex) {
             Logger.getLogger(PSIseeker.class.getName()).log(Level.SEVERE, null, ex);
         }
+        
+        CalculateClass cc=new CalculateClass(positiveResultMap, 
+                negativeResultMap, 
+                positiveBackGroundMap, 
+                negativeBackGroundMap, 
+                positiveGloableLamda,  negativeGloableLamda, Thread,  chrlist) ;
+        
     }
 
     public synchronized void addnegativeResultMap(String chrom, HashSet<PSIout> psioutSET) {
