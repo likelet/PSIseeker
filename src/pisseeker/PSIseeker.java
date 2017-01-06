@@ -50,7 +50,9 @@ public final class PSIseeker {
     private HashMap<String, IntervalTree> negativeTreeTreatMap = new HashMap();
     
     private HashMap<String,Double> positiveGloableLamda=new HashMap<String,Double> ();
-  private HashMap<String,Double> negativeGloableLamda=new HashMap<String,Double> ();
+    private HashMap<String,Double> negativeGloableLamda=new HashMap<String,Double> ();
+    private HashMap<String,Double> positiveGloableNormalizedFactor=new HashMap<String,Double> ();
+    private HashMap<String,Double> negativeGloableNormalizedFactor=new HashMap<String,Double> ();
     public int filternumber = 2;
     public double filterTreatRatio = 0.1D;
     public double enrichmentThreshold = 0D;
@@ -194,7 +196,11 @@ public final class PSIseeker {
                 negativeResultMap, 
                 positiveBackGroundMap, 
                 negativeBackGroundMap, 
-                positiveGloableLamda,  negativeGloableLamda, Thread,  chrlist) ;
+                positiveGloableLamda, 
+                negativeGloableLamda,
+                positiveGloableNormalizedFactor,
+                negativeGloableNormalizedFactor,
+                Thread,  chrlist) ;
         
     }
 
@@ -217,6 +223,14 @@ public final class PSIseeker {
 //        System.out.println("Candidate sites at positiveB strand in \t" + chrom + "\t" + backtree.size());
         this.positiveBackGroundMap.put(chrom, backtree);
     }
+     public synchronized void addPositiveNormalizedFactor(String chrom,double factor){
+         System.out.println("NormalizedFactor at positive strand in \t" + chrom + "\t" + factor);
+        this.positiveGloableNormalizedFactor.put(chrom, factor);
+    }
+    public synchronized void addNegativeNormalizedFactor(String chrom,double factor){
+        System.out.println("NormalizedFactor at Negative strand in \t" + chrom + "\t" + factor);
+        this.negativeGloableNormalizedFactor.put(chrom, factor);
+    }
     public synchronized void addPositiveGlobalLamda(String chrom,double lam){
          System.out.println("Lamda at positive strand in \t" + chrom + "\t" + lam);
         this.positiveGloableLamda.put(chrom, lam);
@@ -225,6 +239,8 @@ public final class PSIseeker {
         System.out.println("Lamda at Negative strand in \t" + chrom + "\t" + lam);
         this.negativeGloableLamda.put(chrom, lam);
     }
+    
+    
     
     public void print(String fileout) throws IOException {
         System.out.println("Writing out..");
@@ -360,12 +376,14 @@ public final class PSIseeker {
                         continue;
                     }
                     potree.put(psi.getPosition(), psi.getPosition() + 1, psi);
-                    psi.calBackRatio();
-                    tamplam+=psi.getBackRatio();
+//                    psi.calBackRatio();
+                    tamplam+=psi.getSupporCountControl();
                 }
 //                intervalControl.clear();
                 PSIseeker.this.addNegativeBackGroundMap(subchr, potree);
-                PSIseeker.this.addNegativeGlobalLamda(subchr, tamplam/potree.size());
+                double factor=(double)intervalTreat.size()/(double)intervalControl.size();
+                PSIseeker.this.addNegativeNormalizedFactor(subchr,factor);
+                PSIseeker.this.addNegativeGlobalLamda(subchr, tamplam/potree.size()*factor);
                 
             } else if (!this.strand) {                             //positve strand 
                 for (Iterator poit = this.intervalTreat.iterator(); poit.hasNext();) {
@@ -427,12 +445,13 @@ public final class PSIseeker {
                         continue;
                     }
                     potree.put(bt.getPosition(), bt.getPosition() + 1, bt);
-                    bt.calBackRatio();
-                    tamplam+=bt.getBackRatio();
+                    tamplam+=bt.getSupporCountControl();
                 }
 //                intervalControl.clear();
                 PSIseeker.this.addPositiveBackGroundMap(subchr, potree);
-                PSIseeker.this.addPositiveGlobalLamda(subchr, tamplam/potree.size());
+                double factor=(double)intervalTreat.size()/(double)intervalControl.size();
+                PSIseeker.this.addPositiveNormalizedFactor(subchr,factor);
+                PSIseeker.this.addPositiveGlobalLamda(subchr, tamplam/potree.size()*factor);
                 
             }
         }
@@ -510,7 +529,7 @@ public final class PSIseeker {
     
     public static void main(String[] args) throws IOException {
 //        PSIseeker ps = new PSIseeker("E:\\迅雷下载\\3.bam", "E:\\迅雷下载\\4.bam", "E:\\迅雷下载\\dm6.fa");
-           PSIseeker ps = new PSIseeker("E:\\迅雷下载\\SMULTQ02-3_chr4.bam", "E:\\迅雷下载\\SMULTQ02-4_chr4.bam", "E:\\迅雷下载\\dm6.fa");
+        PSIseeker ps = new PSIseeker("/Users/zhaoqi/NetBeansProjects/SMULTQ02-3_chr4.bam", "/Users/zhaoqi/NetBeansProjects/SMULTQ02-4_chr4.bam", "/Users/zhaoqi/NetBeansProjects/dm6.fa");
 
         ps.process();
         ps.print("out.txt");

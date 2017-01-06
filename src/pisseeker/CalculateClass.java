@@ -38,18 +38,25 @@ public class CalculateClass {
     private HashMap<String, IntervalTree> positiveBackGroundMap;// result in positve strand 
     private HashMap<String, IntervalTree> negativeBackGroundMap;// result in negative strand;
 
-    private HashMap<String, Double> positiveGloableLamda;
-    private HashMap<String, Double> negativeGloableLamda;
+    private HashMap<String, Double> positiveGloableLamda;//average lamda in positive 
+    private HashMap<String, Double> negativeGloableLamda;//average lamda in negative 
+    private HashMap<String,Double> positiveGloableNormalizedFactor;
+    private HashMap<String,Double> negativeGloableNormalizedFactor;
+    
     private int thread;
     private HashSet<String> chrlist;
 
-    public CalculateClass(HashMap<String, HashSet<PSIout>> positiveResultMap, HashMap<String, HashSet<PSIout>> negativeResultMap, HashMap<String, IntervalTree> positiveBackGroundMap, HashMap<String, IntervalTree> negativeBackGroundMap, HashMap<String, Double> positiveGloableLamda, HashMap<String, Double> negativeGloableLamda, int thread, HashSet<String> chrlist) {
+    
+
+    public CalculateClass(HashMap<String, HashSet<PSIout>> positiveResultMap, HashMap<String, HashSet<PSIout>> negativeResultMap, HashMap<String, IntervalTree> positiveBackGroundMap, HashMap<String, IntervalTree> negativeBackGroundMap, HashMap<String, Double> positiveGloableLamda, HashMap<String, Double> negativeGloableLamda, HashMap<String, Double> positiveGloableNormalizedFactor, HashMap<String, Double> negativeGloableNormalizedFactor, int thread, HashSet<String> chrlist) {
         this.positiveResultMap = positiveResultMap;
         this.negativeResultMap = negativeResultMap;
         this.positiveBackGroundMap = positiveBackGroundMap;
         this.negativeBackGroundMap = negativeBackGroundMap;
         this.positiveGloableLamda = positiveGloableLamda;
         this.negativeGloableLamda = negativeGloableLamda;
+        this.positiveGloableNormalizedFactor = positiveGloableNormalizedFactor;
+        this.negativeGloableNormalizedFactor = negativeGloableNormalizedFactor;
         this.thread = thread;
         this.chrlist = chrlist;
         this.process();
@@ -66,7 +73,7 @@ public class CalculateClass {
                 if ((this.positiveResultMap.get(chr) == null) && (this.positiveBackGroundMap.get(chr) == null)) {
                     continue;
                 }
-                getPoissonPthread getP= new getPoissonPthread(chr, this.positiveResultMap.get(chr),  this.positiveBackGroundMap.get(chr),this.positiveGloableLamda.get(chr));
+                getPoissonPthread getP= new getPoissonPthread(chr, this.positiveResultMap.get(chr),  this.positiveBackGroundMap.get(chr),this.positiveGloableLamda.get(chr),this.positiveGloableNormalizedFactor.get(chr));
                 pool.submit(getP);
             }
             for (Iterator iterator = this.chrlist.iterator(); iterator.hasNext();) {
@@ -74,7 +81,7 @@ public class CalculateClass {
                 if ((this.negativeResultMap.get(chr) == null) && (this.negativeBackGroundMap.get(chr) == null)) {
                     continue;
                 }
-               getPoissonPthread getP= new getPoissonPthread(chr, this.negativeResultMap.get(chr),  this.negativeBackGroundMap.get(chr),this.negativeGloableLamda.get(chr));
+               getPoissonPthread getP= new getPoissonPthread(chr, this.negativeResultMap.get(chr),  this.negativeBackGroundMap.get(chr),this.negativeGloableLamda.get(chr),this.negativeGloableNormalizedFactor.get(chr));
                pool.submit(getP);
             }
             pool.shutdown();
@@ -92,12 +99,16 @@ public class CalculateClass {
         private HashSet<PSIout> subResultMap;
         private IntervalTree subIntervalMap;
         private double globalLam;
+        private double normalizedFactor;
 
-        public getPoissonPthread(String chr, HashSet<PSIout> subResultMap, IntervalTree subIntervalMap, double globalLam) {
+        
+
+        public getPoissonPthread(String chr, HashSet<PSIout> subResultMap, IntervalTree subIntervalMap, double globalLam, double normalizedFactor) {
             this.chr = chr;
             this.subResultMap = subResultMap;
             this.subIntervalMap = subIntervalMap;
             this.globalLam = globalLam;
+            this.normalizedFactor = normalizedFactor;
         }
         
         
@@ -105,26 +116,26 @@ public class CalculateClass {
         public void run() {
             for (Iterator it = subResultMap.iterator(); it.hasNext();) {
                 PSIout psi = (PSIout) it.next();
-                double lamd5k=getAverageLamda(subIntervalMap.overlappers(psi.getPosition()-2500, psi.getPosition()+2500));
-                double lamd1k=getAverageLamda(subIntervalMap.overlappers(psi.getPosition()-500, psi.getPosition()+500));
+                double lamd5k=getLamdabyAMean(subIntervalMap.overlappers(psi.getPosition()-2500, psi.getPosition()+2500));
+                double lamd1k=getLamdabyAMean(subIntervalMap.overlappers(psi.getPosition()-500, psi.getPosition()+500));
                 double lamda=Math.max(lamd1k, lamd5k);
                 lamda=Math.max(lamda, globalLam);
-                PoissonDistribution pdis=new PoissonDistribution(lamda*50);
-                double currentRatio=(double)psi.getSupporCountInTreat()/(double)psi.getTotalCountInTreat();
-                psi.setPoissonP(1-pdis.cumulativeProbability((int)(currentRatio*50)));
+                PoissonDistribution pdis=new PoissonDistribution(lamda);
+                System.out.println(pdis.cumulativeProbability(psi.getSupporCountInTreat()));
+                psi.setPoissonP(1-pdis.cumulativeProbability(psi.getSupporCountInTreat()));
                 
             }
         }
         
-        //Get average enrichment ratio of a background interval 
-        public double getAverageLamda(Iterator iterm){
+        //Get average normalized position count of a background interval 
+        public double getLamdabyAMean(Iterator iterm){
             double tamplam=0;
             double count=0;
             for (Iterator it = iterm; it.hasNext();) {
                 IntervalTree.Node nd = (IntervalTree.Node) it.next();
                 PSIout ps = (PSIout) nd.getValue();
                 count++;
-                tamplam+=ps.getBackRatio();
+                tamplam+=(double)ps.getSupporCountControl()*normalizedFactor;
             }
             return tamplam/count;
             
