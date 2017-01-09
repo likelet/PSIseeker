@@ -502,6 +502,7 @@ public final class PSIseeker {
             return sr.getAlignmentStart() == pos;
         }
 
+        //exclude reads covered position with N cigar code 
         public boolean isCoverAtMcigar(int pos, SAMRecord sr) {
             Cigar cgar = sr.getCigar();
             int currentlength = pos - sr.getAlignmentStart();
@@ -528,9 +529,8 @@ public final class PSIseeker {
     
     
     public static void main(String[] args) throws IOException {
-//        PSIseeker ps = new PSIseeker("E:\\迅雷下载\\3.bam", "E:\\迅雷下载\\4.bam", "E:\\迅雷下载\\dm6.fa");
-        PSIseeker ps = new PSIseeker("/Users/zhaoqi/NetBeansProjects/SMULTQ02-3_chr4.bam", "/Users/zhaoqi/NetBeansProjects/SMULTQ02-4_chr4.bam", "/Users/zhaoqi/NetBeansProjects/dm6.fa");
-
+        PSIseeker ps = new PSIseeker("E:\\迅雷下载\\3.bam", "E:\\迅雷下载\\4.bam", "E:\\迅雷下载\\dm6.fa");
+//        PSIseeker ps = new PSIseeker("/Users/zhaoqi/NetBeansProjects/SMULTQ02-3_chr4.bam", "/Users/zhaoqi/NetBeansProjects/SMULTQ02-4_chr4.bam", "/Users/zhaoqi/NetBeansProjects/dm6.fa");
         ps.process();
         ps.print("out.txt");
         
