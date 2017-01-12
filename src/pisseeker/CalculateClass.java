@@ -121,7 +121,7 @@ public class CalculateClass {
                 double lamda=Math.max(lamd1k, lamd5k);
                 lamda=Math.max(lamda, globalLam);
                 PoissonDistribution pdis=new PoissonDistribution(lamda);
-                System.out.println(pdis.cumulativeProbability(psi.getSupporCountInTreat()));
+//                System.out.println(pdis.cumulativeProbability(psi.getSupporCountInTreat()));
                 psi.setPoissonP(1-pdis.cumulativeProbability(psi.getSupporCountInTreat()));
                 
             }

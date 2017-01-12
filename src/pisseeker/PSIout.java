@@ -5,6 +5,10 @@
  */
 package pisseeker;
 
+import htsjdk.samtools.util.CollectionUtil;
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
  *
  * @author Administrator
@@ -255,6 +259,8 @@ public class PSIout {
     }
 
     public String toString2() {
-        return this.chr + "\t" + this.position + "\t" + this.exbase + "\t" + this.base + "\t" + this.firstCigar + "\t" + this.readsString + "\t" + this.strand + "\t" + this.supporCountInTreat + "\t" + this.totalCountInTreat + "\t" + this.supporCountControl + "\t" + this.totalCountControl + "\t" + this.FisherPvalue + "\t" + this.fihserAdjustP + "\t" + this.enrichmentScore+"\t"+this.PoissonP;
+        final List<?> fields = CollectionUtil.makeList(chr,position,exbase,firstCigar,readsString,strand,supporCountInTreat,totalCountInTreat,supporCountControl,totalCountControl,FisherPvalue,fihserAdjustP,enrichmentScore,PoissonP);
+        String str=fields.stream().map(String::valueOf).collect(Collectors.joining("\t"));
+        return str;
     }
 }
