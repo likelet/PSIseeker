@@ -19,7 +19,7 @@ public class Console {
 
     public static void main(String[] args) throws IOException, FileNotFoundException, ParserConfigurationException {
         long start =   System.nanoTime();
-        String version = "0.0.1";
+        String version = "0.1.1";// refers to http://semver.org/
 //        System.out.println();
 
         if (args.length == 0) {

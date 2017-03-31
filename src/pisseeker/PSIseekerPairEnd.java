@@ -117,7 +117,7 @@ public class PSIseekerPairEnd {
             String chrome = sitem.getReferenceName();
             if (strand) {
                 end=sitem.getAlignmentEnd();// get fragment end 
-                start = sitem.getAlignmentEnd()+sitem.getInferredInsertSize();//get frament start 
+                start = sitem.getAlignmentStart();//get frament start 
                 if (!this.negativeTreeTreatMap.containsKey(chrome)) {
                     IntervalTree potree = new IntervalTree();
                     potree.put(start, end, sitem);
@@ -164,7 +164,7 @@ public class PSIseekerPairEnd {
             }
             if (strand) {
                 end=sitem.getAlignmentEnd();// get fragment end 
-                start = sitem.getAlignmentEnd()+sitem.getInferredInsertSize();//get frament start 
+                start = sitem.getAlignmentStart();//get frament start 
                 if (!this.negativeTreeControlMap.containsKey(chrome)) {
                     IntervalTree potree = new IntervalTree();
                     potree.put(start, end, sitem);
@@ -496,7 +496,9 @@ public class PSIseekerPairEnd {
                 } else if (iscoverPositve(po.getPosition(), sr)) {
                     po.add1supporCountInTreat();
                 }
+                      if (isCoverAtMcigar(po.getPosition(), sr)) {
                     po.add1totalCountInTreat();
+                }
                 
             }
 //            System.out.println(po.getSupporCountInTreat()+"\t"+po.getTotalCountInTreat());
@@ -515,7 +517,9 @@ public class PSIseekerPairEnd {
                 }
 //                po.add1totalCountControl();
                
+                if (isCoverAtMcigar(po.getPosition(), sr)) {
                     po.add1totalCountControl();
+                }
             }
         }
 

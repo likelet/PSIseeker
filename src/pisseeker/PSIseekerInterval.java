@@ -59,8 +59,8 @@ public final class PSIseekerInterval {
     private HashMap<String, IntervalTree> positiveTreeTreatMap = new HashMap<String, IntervalTree>();
     private HashMap<String, IntervalTree> negativeTreeTreatMap = new HashMap<String, IntervalTree>();
     public int filternumber = 2;//at least 2 read support
-    public double filterTreatRatio = 0.;//at least 2 read support
-    public double enrichmentThreshold = 1;//at least 2 read support
+    public double filterTreatRatio = 2;//at least 2 read support
+    public double enrichmentThreshold = 1;//at least fold change
     public int Thread=3;// parellel compute thread bumber 
     public HashSet<String> chrlist = new HashSet<String>();// storage chrlist infromation
 
@@ -525,19 +525,22 @@ public final class PSIseekerInterval {
         pis.setFisherPvalue(test.getTwoTailP(pis.getSupporCountInTreat(), pis.getTotalCountInTreat() - pis.getSupporCountInTreat(), a, pis.getTotalCountControl() - a));
     }
 
+    public HashMap<String, HashSet<PSIout>> getPositiveResultMap() {
+        return positiveResultMap;
+    }
+
+    public HashMap<String, HashSet<PSIout>> getNegativeResultMap() {
+        return negativeResultMap;
+    }
+
+    
+    
+    
+    
     public static void main(String[] args) throws IOException {
 //       PSIseekerInterval ps = new PSIseekerInterval("E:\\迅雷下载\\3.bam", "E:\\迅雷下载\\4.bam", "E:\\迅雷下载\\dm6.fa");
-////        PSIseekerInterval ps = new PSIseekerInterval("E:\\迅雷下载\\SMULTQ02-3_chr4.bam", "E:\\迅雷下载\\SMULTQ02-4_chr4.bam", "E:\\迅雷下载\\dm6.fa");
-//        ps.process();
-//        ps.print("out.txt");
-
-        IntervalTree potree = new IntervalTree();
-        potree.put(1, 1, 3);
-        potree.put(4,4, 4);
-        potree.overlappers(4, 4);
-        for (Iterator it =potree.overlappers(-1, 1); it.hasNext();) {
-            IntervalTree.Node test=(IntervalTree.Node) it.next();
-            System.out.println(test.getValue());
-        }
+        PSIseekerInterval ps = new PSIseekerInterval("E:\\迅雷下载\\SMULTQ02-3_chr4.bam", "E:\\迅雷下载\\SMULTQ02-4_chr4.bam", "E:\\迅雷下载\\dm6.fa");
+        ps.process();
+        ps.print("E:\\迅雷下载\\out.txt");
     }
 }
